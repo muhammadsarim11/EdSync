@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema({
   organizationId: { 
@@ -36,10 +36,9 @@ const userSchema = new mongoose.Schema({
 
 userSchema.index({ email: 1, organizationId: 1 }, { unique: true });
 
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function() {
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {

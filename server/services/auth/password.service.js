@@ -4,6 +4,8 @@ import User from '../../models/user.model.js';
 import AppError from '../../utils/AppError.js';
 import { sendPasswordResetEmail } from '../../utils/email.js';
 
+const GENERIC_RESET_MESSAGE = 'If an account exists for that email, a password reset code has been sent.';
+
 export const forgotPasswordUser = async ({ email, organizationId }) => {
   if (!email || !organizationId) {
     throw new AppError('Please provide email and organization ID.', 400);
@@ -11,24 +13,22 @@ export const forgotPasswordUser = async ({ email, organizationId }) => {
 
   const user = await User.findOne({ email: email.toLowerCase(), organizationId });
 
-  if (!user) {
-    throw new AppError('No account found with that email for this organization.', 404);
+  if (user) {
+    const resetCode = crypto.randomInt(100000, 1000000).toString();
+    const hashedCode = await bcrypt.hash(resetCode, 12);
+
+    user.passwordResetCode = hashedCode;
+    user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendPasswordResetEmail(user.email, resetCode);
   }
-
-  const resetCode = crypto.randomInt(100000, 1000000).toString();
-  const hashedCode = await bcrypt.hash(resetCode, 12);
-
-  user.passwordResetCode = hashedCode;
-  user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
-  await user.save();
-
-  await sendPasswordResetEmail(user.email, resetCode);
 
   return {
     statusCode: 200,
     payload: {
       status: 'success',
-      message: 'Password reset code sent to your email.'
+      message: GENERIC_RESET_MESSAGE
     }
   };
 };
@@ -75,24 +75,22 @@ export const resendPasswordResetCodeUser = async ({ email, organizationId }) => 
 
   const user = await User.findOne({ email: email.toLowerCase(), organizationId });
 
-  if (!user) {
-    throw new AppError('No account found with that email for this organization.', 404);
+  if (user) {
+    const resetCode = crypto.randomInt(100000, 1000000).toString();
+    const hashedCode = await bcrypt.hash(resetCode, 12);
+
+    user.passwordResetCode = hashedCode;
+    user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendPasswordResetEmail(user.email, resetCode);
   }
-
-  const resetCode = crypto.randomInt(100000, 1000000).toString();
-  const hashedCode = await bcrypt.hash(resetCode, 12);
-
-  user.passwordResetCode = hashedCode;
-  user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
-  await user.save();
-
-  await sendPasswordResetEmail(user.email, resetCode);
 
   return {
     statusCode: 200,
     payload: {
       status: 'success',
-      message: 'A new password reset code has been sent to your email.'
+      message: GENERIC_RESET_MESSAGE
     }
   };
 };

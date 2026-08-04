@@ -12,7 +12,13 @@ export const resendVerificationCodeUser = async ({ email, organizationId }) => {
   const user = await User.findOne({ email: email.toLowerCase(), organizationId });
 
   if (!user) {
-    throw new AppError('No account found with that email for this organization.', 404);
+    return {
+      statusCode: 200,
+      payload: {
+        status: 'success',
+        message: 'If an account exists for that email, a verification code has been sent.'
+      }
+    };
   }
 
   if (user.isEmailVerified) {

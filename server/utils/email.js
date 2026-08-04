@@ -1,16 +1,23 @@
 import nodemailer from 'nodemailer';
 
-const sendEmailMessage = async (email, subject, html) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER || 'sarimkhan13579@gmail.com',
-      pass: (process.env.EMAIL_APP_PASS || 'hmxd pzkj cttu pjcj').replace(/\s/g, '')
-    }
-  });
+let cachedTransporter;
 
-  await transporter.sendMail({
-    from: `"EdSync" <${process.env.EMAIL_USER || 'sarimkhan13579@gmail.com'}>`,
+const getTransporter = () => {
+  if (!cachedTransporter) {
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_APP_PASS.replace(/\s/g, '')
+      }
+    });
+  }
+  return cachedTransporter;
+};
+
+const sendEmailMessage = async (email, subject, html) => {
+  await getTransporter().sendMail({
+    from: `"EdSync" <${process.env.EMAIL_USER}>`,
     to: email,
     subject,
     html

@@ -19,10 +19,14 @@ export const registerValidator = [
   body('name').trim().notEmpty().withMessage('Name is required.'),
   email(),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long.'),
-  body('role')
-    .isIn(['InstituteAdmin', 'Instructor', 'Student'])
-    .withMessage('Role must be one of InstituteAdmin, Instructor, or Student.'),
-  organizationId()
+  body('inviteToken').trim().notEmpty().withMessage('An invite token is required.')
+];
+
+export const createOrganizationValidator = [
+  body('orgName').trim().notEmpty().withMessage('Organization name is required.'),
+  body('adminName').trim().notEmpty().withMessage('Admin name is required.'),
+  email(),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long.')
 ];
 
 export const verifyEmailValidator = [email(), organizationId(), sixDigitCode('code')];

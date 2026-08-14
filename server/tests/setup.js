@@ -10,7 +10,8 @@ process.env.CLIENT_URL = 'http://localhost:3000';
 
 vi.mock('../utils/email.js', () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
-  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined)
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+  sendInvitationEmail: vi.fn().mockResolvedValue(undefined)
 }));
 
 let mongod;

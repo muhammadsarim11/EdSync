@@ -3,6 +3,8 @@ import helmet from 'helmet'
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/user.routes.js';
+import organizationRoutes from './routes/organization.routes.js';
+import invitationRoutes from './routes/invitation.routes.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { generalLimiter, sanitizeInput } from './middlewares/security.middleware.js';
 
@@ -19,6 +21,8 @@ app.use(sanitizeInput);
 app.use('/api', generalLimiter);
 
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/organizations', organizationRoutes);
+app.use('/api/v1/invitations', invitationRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

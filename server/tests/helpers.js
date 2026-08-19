@@ -31,3 +31,18 @@ export const createVerifiedOrgAdmin = async (overrides = {}) => {
 
   return { organizationId, email, password, cookie: loginRes.headers['set-cookie'], orgName };
 };
+
+export const inviteAndRegister = async (
+  admin,
+  { name = 'New User', email, role, password = 'password123' }
+) => {
+  await request(app).post('/api/v1/invitations').set('Cookie', admin.cookie).send({ email, role });
+  const inviteToken = lastInviteTokenSent();
+
+  const res = await request(app).post('/api/v1/auth/register').send({ name, email, password, inviteToken });
+
+  // /auth/register's response comes straight from createSendToken, which
+  // serializes the raw Mongoose document (_id), unlike the shaped `id`
+  // fields returned by the organization/invitation/user-management APIs.
+  return { res, userId: res.body.data.user._id, email, password, cookie: res.headers['set-cookie'] };
+};

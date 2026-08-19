@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import User from '../../models/user.model.js';
 import Invitation from '../../models/invitation.model.js';
 import AppError from '../../utils/AppError.js';
@@ -34,17 +35,45 @@ export const registerUser = async ({ name, email, password, inviteToken }, res) 
     );
   }
 
-  const newUser = await User.create({
-    name,
-    email: normalizedEmail,
-    password,
-    role: invitation.role,
-    organizationId: invitation.organizationId,
-    isEmailVerified: true
-  });
+  const session = await mongoose.startSession();
+  let newUser;
 
-  invitation.status = 'Accepted';
-  await invitation.save();
+  try {
+    await session.withTransaction(async () => {
+      // Re-check status inside the transaction: two concurrent accepts of the
+      // same invite would both pass the pre-checks above, but only one may
+      // actually consume it. MongoDB's write-conflict detection on this
+      // document forces the loser's transaction to retry withTransaction's
+      // callback, where it will see the invite as already Accepted.
+      const lockedInvitation = await Invitation.findOne({ _id: invitation._id, status: 'Pending' }).session(
+        session
+      );
+
+      if (!lockedInvitation) {
+        throw new AppError('This invite has already been used.', 409);
+      }
+
+      const created = await User.create(
+        [
+          {
+            name,
+            email: normalizedEmail,
+            password,
+            role: lockedInvitation.role,
+            organizationId: lockedInvitation.organizationId,
+            isEmailVerified: true
+          }
+        ],
+        { session }
+      );
+      newUser = created[0];
+
+      lockedInvitation.status = 'Accepted';
+      await lockedInvitation.save({ session });
+    });
+  } finally {
+    await session.endSession();
+  }
 
   createSendToken(newUser, 201, res);
 };

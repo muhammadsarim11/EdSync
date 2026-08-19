@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, afterEach, vi } from 'vitest';
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-do-not-use-in-production';
@@ -14,17 +14,19 @@ vi.mock('../utils/email.js', () => ({
   sendInvitationEmail: vi.fn().mockResolvedValue(undefined)
 }));
 
-let mongod;
+let replSet;
 
 beforeAll(async () => {
-  // CI provides a real Mongo service container (fast, no binary download).
-  // Local dev falls back to an in-memory server for a zero-setup workflow.
+  // A replica set (even a single node) is required for multi-document
+  // transactions, which invite-acceptance relies on. An external
+  // MONGO_TEST_URI is assumed to already be a replica set/Atlas cluster;
+  // otherwise spin up an ephemeral one-node replica set for the run.
   const uri = process.env.MONGO_TEST_URI;
   if (uri) {
     await mongoose.connect(uri);
   } else {
-    mongod = await MongoMemoryServer.create();
-    await mongoose.connect(mongod.getUri());
+    replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
+    await mongoose.connect(replSet.getUri());
   }
 });
 
@@ -36,5 +38,5 @@ afterEach(async () => {
 
 afterAll(async () => {
   await mongoose.disconnect();
-  if (mongod) await mongod.stop();
+  if (replSet) await replSet.stop();
 });

@@ -38,8 +38,9 @@ export const resetPasswordUser = async ({ email, organizationId, code, newPasswo
     throw new AppError('Please provide email, organization ID, reset code, and new password.', 400);
   }
 
-  const user = await User.findOne({ email: email.toLowerCase(), organizationId })
-    .select('+passwordResetCode +passwordResetCodeExpires');
+  const user = await User.findOne({ email: email.toLowerCase(), organizationId }).select(
+    '+passwordResetCode +passwordResetCodeExpires'
+  );
 
   if (!user) {
     throw new AppError('No account found with that email for this organization.', 404);

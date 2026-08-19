@@ -22,10 +22,16 @@ export const registerUser = async ({ name, email, password, inviteToken }, res) 
     throw new AppError('This invite was issued for a different email address.', 400);
   }
 
-  const existingUser = await User.findOne({ email: normalizedEmail, organizationId: invitation.organizationId });
+  const existingUser = await User.findOne({
+    email: normalizedEmail,
+    organizationId: invitation.organizationId
+  });
 
   if (existingUser) {
-    throw new AppError('A user with this email already exists for this organization. Please log in instead.', 409);
+    throw new AppError(
+      'A user with this email already exists for this organization. Please log in instead.',
+      409
+    );
   }
 
   const newUser = await User.create({

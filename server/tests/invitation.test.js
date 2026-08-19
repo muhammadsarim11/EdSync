@@ -130,7 +130,7 @@ describe('POST /api/v1/invitations', () => {
 });
 
 describe('GET /api/v1/invitations', () => {
-  it('scopes invitations to the requesting admin\'s organization', async () => {
+  it("scopes invitations to the requesting admin's organization", async () => {
     const adminA = await createVerifiedOrgAdmin();
     const adminB = await createVerifiedOrgAdmin();
 
@@ -148,7 +148,7 @@ describe('GET /api/v1/invitations', () => {
 });
 
 describe('DELETE /api/v1/invitations/:id', () => {
-  it('returns 404 when revoking another organization\'s invitation', async () => {
+  it("returns 404 when revoking another organization's invitation", async () => {
     const adminA = await createVerifiedOrgAdmin();
     const adminB = await createVerifiedOrgAdmin();
 

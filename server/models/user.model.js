@@ -1,67 +1,70 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
-const userSchema = new mongoose.Schema({
-  organizationId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Organization', 
-    required: true 
+const userSchema = new mongoose.Schema(
+  {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    email: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false
+    },
+    verificationCode: {
+      type: String,
+      select: false
+    },
+    verificationCodeExpires: {
+      type: Date,
+      select: false
+    },
+    passwordResetCode: {
+      type: String,
+      select: false
+    },
+    passwordResetCodeExpires: {
+      type: Date,
+      select: false
+    },
+    password: {
+      type: String,
+      required: true,
+      select: false
+    },
+    role: {
+      type: String,
+      enum: ['InstituteAdmin', 'Instructor', 'Student'],
+      required: true
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    }
   },
-  name: { 
-    type: String, 
-    required: true,
-    trim: true
-  },
-  email: { 
-    type: String, 
-    required: true,
-    lowercase: true,
-    trim: true
-  },
-  isEmailVerified: {
-    type: Boolean,
-    default: false
-  },
-  verificationCode: {
-    type: String,
-    select: false
-  },
-  verificationCodeExpires: {
-    type: Date,
-    select: false
-  },
-  passwordResetCode: {
-    type: String,
-    select: false
-  },
-  passwordResetCodeExpires: {
-    type: Date,
-    select: false
-  },
-  password: { 
-    type: String, 
-    required: true,
-    select: false 
-  },
-  role: { 
-    type: String, 
-    enum: ['InstituteAdmin', 'Instructor', 'Student'], 
-    required: true 
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, { timestamps: true });
+  { timestamps: true }
+);
 
 userSchema.index({ email: 1, organizationId: 1 }, { unique: true });
 
-userSchema.pre('save', async function() {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
+userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 

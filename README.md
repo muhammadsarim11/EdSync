@@ -111,6 +111,34 @@ All routes are prefixed with `/api/v1`.
 | GET | `/invitations` | InstituteAdmin | List invitations for the caller's org |
 | DELETE | `/invitations/:id` | InstituteAdmin | Revoke a pending invitation |
 
+### Users
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET | `/users` | InstituteAdmin | List the caller's org, filterable by `?role=` / `?status=active\|suspended` |
+| PATCH | `/users/:id/suspend` | InstituteAdmin | Blocks the target's access immediately (`requireAuth` checks `isActive` on every request). Can target a peer InstituteAdmin, never self |
+| PATCH | `/users/:id/reactivate` | InstituteAdmin | Restores access |
+
+### Cohorts, Modules, Lectures
+
+Cohort is the tenancy root for the curriculum tree — Module/Lecture authorization reduces to
+"can this user manage/view this cohort" (`services/cohort.service.js`). A non-owning Instructor
+or a Student who isn't enrolled gets 404, not 403, so these endpoints never confirm another
+tenant's or instructor's data exists.
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| POST | `/cohorts` | InstituteAdmin | `instructorId` must reference an existing Instructor in the org |
+| GET | `/cohorts` | any role | Admin sees all; Instructor sees their own; Student sees only cohorts they're enrolled in |
+| GET/PATCH/DELETE | `/cohorts/:id` | InstituteAdmin or the assigned Instructor for write; view follows the same rule as the list | DELETE is blocked (409) while the cohort still has enrollments or modules |
+| GET/POST | `/cohorts/:cohortId/modules` | view: same as cohort; create: InstituteAdmin/assigned Instructor | |
+| GET/PATCH/DELETE | `/modules/:id` | same as above | DELETE blocked (409) while it still has lectures |
+| GET/POST | `/modules/:moduleId/lectures` | same as above | |
+| GET/PATCH/DELETE | `/lectures/:id` | same as above | `videoUrl`/`resourceUrl` are plain URL fields for now (e.g. a Cloudinary or GitHub link) — no server-side upload handling yet |
+| POST | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor | Bulk-enrolls a roster of `studentIds`; already-enrolled ids are skipped, not errored |
+| GET | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor | Roster with student name/email populated |
+| DELETE | `/enrollments/:id` | InstituteAdmin/assigned Instructor | Unenrolls one student |
+
 ## Security
 
 - `helmet`, credentialed `cors` (origin from `CLIENT_URL`), and a 10kb JSON body cap.
@@ -132,10 +160,13 @@ npm test          # single run
 npm run test:watch
 ```
 
-Tests run against a real MongoDB, not mocks. Locally, `mongodb-memory-server` spins one up
-automatically (a one-time ~700MB binary download on first run, then cached). In CI, set
-`MONGO_TEST_URI` and the suite connects to that instead — the GitHub Actions workflow points it
-at a `mongo:7` service container so CI never pays that download cost.
+Tests run against a real MongoDB, not mocks — a single-node replica set
+(`mongodb-memory-server`'s `MongoMemoryReplSet`), since invite acceptance uses a multi-document
+transaction and transactions require a replica set (a plain `mongod` doesn't support them; Atlas
+and any real deployment already is one). The underlying binary is a one-time ~700MB download,
+cached afterward; CI caches that same directory across runs (`.github/workflows/ci.yml`) so it
+isn't repeated. Set `MONGO_TEST_URI` to point the suite at an existing replica set instead of
+spinning up an ephemeral one.
 
 Outbound email (`utils/email.js`) is mocked in tests (`tests/setup.js`); no real email is ever
 sent by the suite.
@@ -156,10 +187,15 @@ Both run in CI (`.github/workflows/ci.yml`) alongside the test suite, on every p
 This repo follows GitHub Flow: `main` is always deployable, and work happens on short-lived
 branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/...`).
 
-## Known limitations
+## Roadmap
 
-- Invite acceptance (`services/auth/register.service.js`) creates the `User` and marks the
-  `Invitation` `Accepted` as two separate writes, not a single Mongo transaction. The unique
-  `email + organizationId` index prevents a duplicate account, but it isn't fully atomic.
-- No LMS domain logic yet (Cohort/Module/Lecture/Assignment/Submission CRUD) beyond the Mongoose
-  schemas themselves — auth and tenant/invite management is the only implemented slice.
+IAM (invite-only auth + admin user management) and the Curriculum engine (Cohort/Module/Lecture
+CRUD + roster enrollment) are built. Not yet implemented:
+
+- **Assessment & Grading** — Assignment/Submission CRUD and grading. The models already enforce
+  one-submission-per-student via a unique `assignmentId + studentId` index.
+- **Background Jobs** — the verification/invite/reset emails in `utils/email.js` still send
+  synchronously inline; moving them to a Redis/BullMQ queue is next.
+- **Real-Time** — Socket.io chat and a Q&A board per cohort.
+- **Tenant Configuration** — branding/theme endpoints and an org dashboard. True subdomain
+  routing is Next.js middleware territory and lives outside this repo.

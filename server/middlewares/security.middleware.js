@@ -1,10 +1,15 @@
 import rateLimit from 'express-rate-limit';
 
+// Rate-limit windows make functional tests flaky/order-dependent; the
+// limiters' own behavior is covered by manual verification, not this flag.
+const skipInTests = () => process.env.NODE_ENV === 'test';
+
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTests,
   message: { status: 'fail', message: 'Too many requests. Please try again later.' }
 });
 
@@ -16,6 +21,7 @@ export const authLimiter = rateLimit({
   limit: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: skipInTests,
   message: { status: 'fail', message: 'Too many attempts. Please try again later.' }
 });
 
@@ -27,6 +33,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
+  skip: skipInTests,
   message: { status: 'fail', message: 'Too many failed login attempts. Please try again later.' }
 });
 

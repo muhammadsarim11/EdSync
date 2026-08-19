@@ -11,8 +11,7 @@ import {
 } from '../services/auth.service.js';
 
 export const register = catchAsync(async (req, res) => {
-  const result = await registerUser(req.body);
-  res.status(result.statusCode).json(result.payload);
+  await registerUser(req.body, res);
 });
 
 export const verifyEmail = catchAsync(async (req, res) => {

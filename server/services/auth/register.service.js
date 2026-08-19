@@ -1,42 +1,44 @@
-import crypto from 'crypto';
-import bcrypt from 'bcrypt';
 import User from '../../models/user.model.js';
+import Invitation from '../../models/invitation.model.js';
 import AppError from '../../utils/AppError.js';
-import { sendVerificationEmail } from '../../utils/email.js';
+import { hashInviteToken } from '../../utils/inviteToken.js';
+import { createSendToken } from './token.service.js';
 
-export const registerUser = async ({ name, email, password, role, organizationId }) => {
-  if (!name || !email || !password || !role || !organizationId) {
-    throw new AppError('Please provide name, email, password, role, and organization ID.', 400);
+export const registerUser = async ({ name, email, password, inviteToken }, res) => {
+  if (!name || !email || !password || !inviteToken) {
+    throw new AppError('Please provide name, email, password, and inviteToken.', 400);
   }
 
   const normalizedEmail = email.toLowerCase();
-  const existingUser = await User.findOne({ email: normalizedEmail, organizationId });
+  const tokenHash = hashInviteToken(inviteToken);
 
-  if (existingUser) {
-    throw new AppError('A user with this email already exists for this organization. Please verify or use another email.', 409);
+  const invitation = await Invitation.findOne({ tokenHash, status: 'Pending' });
+
+  if (!invitation || invitation.expiresAt < Date.now()) {
+    throw new AppError('Invalid or expired invite link.', 400);
   }
 
-  const verificationCode = crypto.randomInt(100000, 1000000).toString();
-  const hashedCode = await bcrypt.hash(verificationCode, 12);
+  if (invitation.email !== normalizedEmail) {
+    throw new AppError('This invite was issued for a different email address.', 400);
+  }
+
+  const existingUser = await User.findOne({ email: normalizedEmail, organizationId: invitation.organizationId });
+
+  if (existingUser) {
+    throw new AppError('A user with this email already exists for this organization. Please log in instead.', 409);
+  }
 
   const newUser = await User.create({
     name,
     email: normalizedEmail,
     password,
-    role,
-    organizationId,
-    isEmailVerified: false,
-    verificationCode: hashedCode,
-    verificationCodeExpires: Date.now() + 10 * 60 * 1000
+    role: invitation.role,
+    organizationId: invitation.organizationId,
+    isEmailVerified: true
   });
 
-  await sendVerificationEmail(newUser.email, verificationCode);
+  invitation.status = 'Accepted';
+  await invitation.save();
 
-  return {
-    statusCode: 201,
-    payload: {
-      status: 'success',
-      message: 'Verification code sent to your email. Please verify your account before logging in.'
-    }
-  };
+  createSendToken(newUser, 201, res);
 };

@@ -39,3 +39,11 @@ export const sendPasswordResetEmail = async (email, code) => {
     `<p>Your password reset code is <strong>${code}</strong>.</p><p>It expires in 10 minutes.</p>`
   );
 };
+
+export const sendInvitationEmail = async (email, inviteLink, organizationName, role) => {
+  await sendEmailMessage(
+    email,
+    `You're invited to join ${organizationName} on EdSync`,
+    `<p>You have been invited to join <strong>${organizationName}</strong> as a <strong>${role}</strong>.</p><p>Click the link below to accept the invitation and set up your account. It expires in 7 days.</p><p><a href="${inviteLink}">${inviteLink}</a></p>`
+  );
+};

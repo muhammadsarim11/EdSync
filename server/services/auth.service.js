@@ -9,4 +9,3 @@ export {
   changePasswordUser
 } from './auth/password.service.js';
 export { resendVerificationCodeUser } from './auth/resend.service.js';
-

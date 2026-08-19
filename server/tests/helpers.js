@@ -27,9 +27,7 @@ export const createVerifiedOrgAdmin = async (overrides = {}) => {
 
   await request(app).post('/api/v1/auth/verify-email').send({ email, organizationId, code });
 
-  const loginRes = await request(app)
-    .post('/api/v1/auth/login')
-    .send({ email, password, organizationId });
+  const loginRes = await request(app).post('/api/v1/auth/login').send({ email, password, organizationId });
 
   return { organizationId, email, password, cookie: loginRes.headers['set-cookie'], orgName };
 };

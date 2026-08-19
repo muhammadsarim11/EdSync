@@ -5,10 +5,7 @@ import { sendPasswordResetEmail } from '../utils/email.js';
 import { createVerifiedOrgAdmin, lastCodeSentTo, lastInviteTokenSent } from './helpers.js';
 
 const inviteAndRegister = async (admin, { email = 'ada@example.com', role = 'Student' } = {}) => {
-  await request(app)
-    .post('/api/v1/invitations')
-    .set('Cookie', admin.cookie)
-    .send({ email, role });
+  await request(app).post('/api/v1/invitations').set('Cookie', admin.cookie).send({ email, role });
   const inviteToken = lastInviteTokenSent();
 
   const res = await request(app)
@@ -29,9 +26,12 @@ describe('POST /api/v1/auth/register', () => {
   });
 
   it('rejects registration without a valid invite token', async () => {
-    const res = await request(app)
-      .post('/api/v1/auth/register')
-      .send({ name: 'Ada Lovelace', email: 'ada@example.com', password: 'password123', inviteToken: 'bogus' });
+    const res = await request(app).post('/api/v1/auth/register').send({
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      password: 'password123',
+      inviteToken: 'bogus'
+    });
 
     expect(res.status).toBe(400);
   });
@@ -94,9 +94,12 @@ describe('full auth lifecycle', () => {
     expect(forgotRes.status).toBe(200);
     const resetCode = lastCodeSentTo(sendPasswordResetEmail);
 
-    const resetRes = await request(app)
-      .post('/api/v1/auth/reset-password')
-      .send({ email: 'forgot@example.com', organizationId: org, code: resetCode, newPassword: 'resetPassword789' });
+    const resetRes = await request(app).post('/api/v1/auth/reset-password').send({
+      email: 'forgot@example.com',
+      organizationId: org,
+      code: resetCode,
+      newPassword: 'resetPassword789'
+    });
     expect(resetRes.status).toBe(200);
 
     const loginRes = await request(app)

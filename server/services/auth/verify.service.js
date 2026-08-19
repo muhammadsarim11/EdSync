@@ -7,7 +7,9 @@ export const verifyEmailUser = async ({ email, organizationId, code }) => {
     throw new AppError('Please provide email, organization ID, and verification code.', 400);
   }
 
-  const user = await User.findOne({ email: email.toLowerCase(), organizationId }).select('+verificationCode +verificationCodeExpires');
+  const user = await User.findOne({ email: email.toLowerCase(), organizationId }).select(
+    '+verificationCode +verificationCodeExpires'
+  );
 
   if (!user) {
     throw new AppError('No pending verification was found for this email.', 404);

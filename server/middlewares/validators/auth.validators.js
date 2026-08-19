@@ -6,12 +6,16 @@ export const validate = (req, res, next) => {
   if (errors.isEmpty()) {
     return next();
   }
-  const message = errors.array().map((error) => error.msg).join(' ');
+  const message = errors
+    .array()
+    .map((error) => error.msg)
+    .join(' ');
   next(new AppError(message, 400));
 };
 
 const email = () => body('email').trim().isEmail().withMessage('A valid email is required.');
-const organizationId = () => body('organizationId').isMongoId().withMessage('A valid organization ID is required.');
+const organizationId = () =>
+  body('organizationId').isMongoId().withMessage('A valid organization ID is required.');
 const sixDigitCode = (field) =>
   body(field).trim().isLength({ min: 6, max: 6 }).isNumeric().withMessage(`${field} must be a 6-digit code.`);
 

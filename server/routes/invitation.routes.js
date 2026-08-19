@@ -2,7 +2,10 @@ import express from 'express';
 import { inviteUser, getInvitations, deleteInvitation } from '../controllers/invitation.controller.js';
 import { requireAuth, restrictTo } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validators/auth.validators.js';
-import { createInvitationValidator, revokeInvitationValidator } from '../middlewares/validators/invitation.validators.js';
+import {
+  createInvitationValidator,
+  revokeInvitationValidator
+} from '../middlewares/validators/invitation.validators.js';
 
 const router = express.Router();
 

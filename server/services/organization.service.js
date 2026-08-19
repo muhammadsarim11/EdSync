@@ -35,7 +35,8 @@ export const registerOrganization = async ({ orgName, adminName, email, password
     statusCode: 201,
     payload: {
       status: 'success',
-      message: 'Institute created. Verification code sent to the admin email. Please verify before logging in.',
+      message:
+        'Institute created. Verification code sent to the admin email. Please verify before logging in.',
       data: {
         organization: {
           id: organization._id,

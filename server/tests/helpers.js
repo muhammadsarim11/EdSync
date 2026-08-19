@@ -46,3 +46,22 @@ export const inviteAndRegister = async (
   // fields returned by the organization/invitation/user-management APIs.
   return { res, userId: res.body.data.user._id, email, password, cookie: res.headers['set-cookie'] };
 };
+
+export const createCohortWithInstructor = async (admin, overrides = {}) => {
+  const instructor = await inviteAndRegister(admin, {
+    email: overrides.instructorEmail || `instructor-${unique()}@example.com`,
+    role: 'Instructor'
+  });
+
+  const res = await request(app)
+    .post('/api/v1/cohorts')
+    .set('Cookie', admin.cookie)
+    .send({
+      title: overrides.title || 'Test Cohort',
+      startDate: overrides.startDate || new Date().toISOString(),
+      instructorId: instructor.userId,
+      ...overrides.cohortBody
+    });
+
+  return { res, cohortId: res.body.data?.cohort?.id, instructor };
+};

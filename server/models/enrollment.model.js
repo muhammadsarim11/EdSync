@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const enrollmentSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
+    },
     studentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -28,5 +33,6 @@ const enrollmentSchema = new mongoose.Schema(
 );
 
 enrollmentSchema.index({ studentId: 1, cohortId: 1 }, { unique: true });
+enrollmentSchema.index({ organizationId: 1 });
 
 export default mongoose.model('Enrollment', enrollmentSchema);

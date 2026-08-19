@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
 import Invitation from '../models/invitation.model.js';
+import User from '../models/user.model.js';
 import { sendInvitationEmail } from '../utils/email.js';
 import { createVerifiedOrgAdmin, lastInviteTokenSent } from './helpers.js';
 
@@ -126,6 +127,62 @@ describe('POST /api/v1/invitations', () => {
       .set('Cookie', studentCookie)
       .send({ email: 'nope@example.com', role: 'Student' });
     expect(res.status).toBe(403);
+  });
+});
+
+describe('invite acceptance atomicity', () => {
+  it('lets only one of two concurrent accepts of the same invite succeed', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    await request(app)
+      .post('/api/v1/invitations')
+      .set('Cookie', admin.cookie)
+      .send({ email: 'race@example.com', role: 'Student' });
+    const inviteToken = lastInviteTokenSent();
+
+    const [first, second] = await Promise.all([
+      registerWithToken({ inviteToken, email: 'race@example.com' }),
+      registerWithToken({ inviteToken, email: 'race@example.com' })
+    ]);
+
+    const statuses = [first.status, second.status].sort();
+    expect(statuses[0]).toBe(201);
+    expect([400, 409]).toContain(statuses[1]);
+
+    const users = await User.find({ email: 'race@example.com', organizationId: admin.organizationId });
+    expect(users).toHaveLength(1);
+
+    const invitation = await Invitation.findOne({
+      email: 'race@example.com',
+      organizationId: admin.organizationId
+    });
+    expect(invitation.status).toBe('Accepted');
+  });
+
+  it('rolls back the created user if marking the invitation accepted fails', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    await request(app)
+      .post('/api/v1/invitations')
+      .set('Cookie', admin.cookie)
+      .send({ email: 'rollback@example.com', role: 'Student' });
+    const inviteToken = lastInviteTokenSent();
+
+    const saveSpy = vi.spyOn(Invitation.prototype, 'save').mockImplementationOnce(() => {
+      throw new Error('simulated failure marking the invitation accepted');
+    });
+
+    const res = await registerWithToken({ inviteToken, email: 'rollback@example.com' });
+    saveSpy.mockRestore();
+
+    expect(res.status).toBe(500);
+
+    const users = await User.find({ email: 'rollback@example.com', organizationId: admin.organizationId });
+    expect(users).toHaveLength(0);
+
+    const invitation = await Invitation.findOne({
+      email: 'rollback@example.com',
+      organizationId: admin.organizationId
+    });
+    expect(invitation.status).toBe('Pending');
   });
 });
 

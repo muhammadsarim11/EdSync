@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/user.routes.js';
 import organizationRoutes from './routes/organization.routes.js';
 import invitationRoutes from './routes/invitation.routes.js';
+import userManagementRoutes from './routes/userManagement.routes.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { generalLimiter, sanitizeInput } from './middlewares/security.middleware.js';
 
@@ -25,6 +26,7 @@ app.use('/api', generalLimiter);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/organizations', organizationRoutes);
 app.use('/api/v1/invitations', invitationRoutes);
+app.use('/api/v1/users', userManagementRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

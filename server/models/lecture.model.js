@@ -2,6 +2,16 @@ import mongoose from 'mongoose';
 
 const lectureSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
+    },
+    cohortId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cohort',
+      required: true
+    },
     moduleId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Module',
@@ -25,6 +35,10 @@ const lectureSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    resourceUrl: {
+      type: String,
+      default: ''
+    },
     durationInMinutes: {
       type: Number,
       default: 0
@@ -34,5 +48,7 @@ const lectureSchema = new mongoose.Schema(
 );
 
 lectureSchema.index({ moduleId: 1 });
+lectureSchema.index({ cohortId: 1 });
+lectureSchema.index({ organizationId: 1 });
 
 export default mongoose.model('Lecture', lectureSchema);

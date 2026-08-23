@@ -139,6 +139,22 @@ tenant's or instructor's data exists.
 | GET | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor | Roster with student name/email populated |
 | DELETE | `/enrollments/:id` | InstituteAdmin/assigned Instructor | Unenrolls one student |
 
+### Assignments, Submissions
+
+Assignment denormalizes `organizationId`/`cohortId` from its Lecture the same way Lecture does
+from Module, so grading/ownership checks stay one Cohort lookup deep. Submission status is
+computed at submission time, not by a cron sweep: `Late` if `now > assignment.deadline`,
+`Submitted` otherwise, `Graded` once an instructor grades it.
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| GET/POST | `/lectures/:lectureId/assignments` | view: cohort visibility; create: InstituteAdmin/assigned Instructor | |
+| GET/PATCH/DELETE | `/assignments/:id` | same as above | DELETE blocked (409) while it still has submissions |
+| POST | `/assignments/:assignmentId/submissions` | Student only | Requires actual enrollment in the assignment's cohort (404 otherwise); one submission per student, enforced by both a friendly 409 precheck and a unique `assignmentId+studentId` index |
+| GET | `/assignments/:assignmentId/submissions` | any role | InstituteAdmin/assigned Instructor see every submission (populated with student name/email); a Student sees only their own |
+| GET | `/submissions/:id` | InstituteAdmin/assigned Instructor, or the submitting Student | A different student's submission 404s |
+| PATCH | `/submissions/:id/grade` | InstituteAdmin/assigned Instructor | Validates `obtainedMarks` against the assignment's `totalMarks`; sets status to `Graded` |
+
 ## Security
 
 - `helmet`, credentialed `cors` (origin from `CLIENT_URL`), and a 10kb JSON body cap.
@@ -189,11 +205,10 @@ branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/.
 
 ## Roadmap
 
-IAM (invite-only auth + admin user management) and the Curriculum engine (Cohort/Module/Lecture
-CRUD + roster enrollment) are built. Not yet implemented:
+IAM (invite-only auth + admin user management), the Curriculum engine (Cohort/Module/Lecture CRUD
++ roster enrollment), and Assessment & Grading (Assignment/Submission CRUD + grading) are built.
+Not yet implemented:
 
-- **Assessment & Grading** — Assignment/Submission CRUD and grading. The models already enforce
-  one-submission-per-student via a unique `assignmentId + studentId` index.
 - **Background Jobs** — the verification/invite/reset emails in `utils/email.js` still send
   synchronously inline; moving them to a Redis/BullMQ queue is next.
 - **Real-Time** — Socket.io chat and a Q&A board per cohort.

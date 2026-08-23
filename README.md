@@ -37,15 +37,18 @@ connects to Mongo, and starts listening.
 ## Getting started
 
 ```bash
+docker compose up -d redis   # from the repo root
 cd server
 npm install
 cp .env.example .env   # fill in real values
 npm run dev
+npm run worker              # in a second terminal - actually sends the queued emails
 ```
 
-You'll need a MongoDB instance running locally (or a `MONGO_URI` pointing at one, e.g. Atlas) and
-a Gmail account with an [App Password](https://myaccount.google.com/apppasswords) for sending
-verification/invite emails.
+You'll need a MongoDB instance running locally (or a `MONGO_URI` pointing at one, e.g. Atlas), a
+Gmail account with an [App Password](https://myaccount.google.com/apppasswords) for sending
+verification/invite emails, and Redis (`docker compose up -d redis`, or point `REDIS_URL` at any
+other instance).
 
 ### Environment variables
 
@@ -58,6 +61,7 @@ verification/invite emails.
 | `EMAIL_USER` | yes | Gmail address used to send verification/invite/reset emails |
 | `EMAIL_APP_PASS` | yes | Gmail App Password for `EMAIL_USER` |
 | `CLIENT_URL` | no (default `http://localhost:3000`) | CORS origin, and the base URL invite links point at |
+| `REDIS_URL` | yes | Backs the BullMQ email queue (`docker compose up -d redis` for local dev) |
 
 The server fails fast at startup (`config/validateEnv.js`) if any required variable is missing,
 rather than silently falling back to a default.
@@ -155,6 +159,26 @@ computed at submission time, not by a cron sweep: `Late` if `now > assignment.de
 | GET | `/submissions/:id` | InstituteAdmin/assigned Instructor, or the submitting Student | A different student's submission 404s |
 | PATCH | `/submissions/:id/grade` | InstituteAdmin/assigned Instructor | Validates `obtainedMarks` against the assignment's `totalMarks`; sets status to `Graded` |
 
+## Background jobs
+
+Verification, invitation, and password-reset emails no longer send synchronously inline - the
+API process enqueues a BullMQ job (`queues/email.queue.js`) and returns immediately; a separate
+`npm run worker` process (`workers/email.worker.js`) dequeues it and calls the same
+`utils/email.js` functions the request handler used to call directly, retrying on failure.
+
+A dead Redis must never turn an already-successful database write into a 500 for the client - the
+account/invite/reset-code already exists by the time the email is queued, so a queue failure is
+logged and swallowed, not thrown. The producer connection also bounds every ioredis retry knob
+(`config/redis.js`'s `producerConnection`) so an enqueue attempt fails within ~5s instead of
+hanging the request indefinitely, which is what happens with BullMQ's default connection options
+against an unreachable Redis. The Worker keeps the default unbounded-retry connection, since
+retrying forever in the background is exactly what it should do.
+
+Tests never touch Redis: under `NODE_ENV=test`, the queue functions call the mocked
+`utils/email.js` functions directly instead of constructing a Queue at all (mirroring the
+`skipInTests` pattern already used for rate limiters), so `tests/setup.js`'s mocks and every
+assertion on them work unchanged.
+
 ## Security
 
 - `helmet`, credentialed `cors` (origin from `CLIENT_URL`), and a 10kb JSON body cap.
@@ -206,11 +230,9 @@ branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/.
 ## Roadmap
 
 IAM (invite-only auth + admin user management), the Curriculum engine (Cohort/Module/Lecture CRUD
-+ roster enrollment), and Assessment & Grading (Assignment/Submission CRUD + grading) are built.
-Not yet implemented:
++ roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), and Background
+Jobs (BullMQ/Redis email queue) are built. Not yet implemented:
 
-- **Background Jobs** — the verification/invite/reset emails in `utils/email.js` still send
-  synchronously inline; moving them to a Redis/BullMQ queue is next.
 - **Real-Time** — Socket.io chat and a Q&A board per cohort.
 - **Tenant Configuration** — branding/theme endpoints and an org dashboard. True subdomain
   routing is Next.js middleware territory and lives outside this repo.

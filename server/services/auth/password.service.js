@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import User from '../../models/user.model.js';
 import AppError from '../../utils/AppError.js';
-import { sendPasswordResetEmail } from '../../utils/email.js';
+import { queuePasswordResetEmail } from '../../queues/email.queue.js';
 
 const GENERIC_RESET_MESSAGE = 'If an account exists for that email, a password reset code has been sent.';
 
@@ -21,7 +21,7 @@ export const forgotPasswordUser = async ({ email, organizationId }) => {
     user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    await sendPasswordResetEmail(user.email, resetCode);
+    await queuePasswordResetEmail(user.email, resetCode);
   }
 
   return {
@@ -84,7 +84,7 @@ export const resendPasswordResetCodeUser = async ({ email, organizationId }) => 
     user.passwordResetCodeExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    await sendPasswordResetEmail(user.email, resetCode);
+    await queuePasswordResetEmail(user.email, resetCode);
   }
 
   return {

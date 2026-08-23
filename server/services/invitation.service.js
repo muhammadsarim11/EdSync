@@ -2,7 +2,7 @@ import Organization from '../models/organization.model.js';
 import Invitation from '../models/invitation.model.js';
 import AppError from '../utils/AppError.js';
 import { generateInviteToken } from '../utils/inviteToken.js';
-import { sendInvitationEmail } from '../utils/email.js';
+import { queueInvitationEmail } from '../queues/email.queue.js';
 
 const INVITE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -35,7 +35,7 @@ export const createInvitation = async ({ organizationId, invitedBy, email, role 
   });
 
   const inviteLink = `${process.env.CLIENT_URL}/accept-invite?token=${token}`;
-  await sendInvitationEmail(normalizedEmail, inviteLink, organization.name, role);
+  await queueInvitationEmail(normalizedEmail, inviteLink, organization.name, role);
 
   return {
     statusCode: 201,

@@ -1,4 +1,4 @@
-const REQUIRED_ENV_VARS = ['MONGO_URI', 'JWT_SECRET', 'EMAIL_USER', 'EMAIL_APP_PASS'];
+const REQUIRED_ENV_VARS = ['MONGO_URI', 'JWT_SECRET', 'EMAIL_USER', 'EMAIL_APP_PASS', 'REDIS_URL'];
 
 const validateEnv = () => {
   const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);

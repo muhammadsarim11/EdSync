@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import User from '../../models/user.model.js';
 import AppError from '../../utils/AppError.js';
-import { sendVerificationEmail } from '../../utils/email.js';
+import { queueVerificationEmail } from '../../queues/email.queue.js';
 
 export const resendVerificationCodeUser = async ({ email, organizationId }) => {
   if (!email || !organizationId) {
@@ -38,7 +38,7 @@ export const resendVerificationCodeUser = async ({ email, organizationId }) => {
   user.verificationCodeExpires = Date.now() + 10 * 60 * 1000;
   await user.save();
 
-  await sendVerificationEmail(user.email, verificationCode);
+  await queueVerificationEmail(user.email, verificationCode);
 
   return {
     statusCode: 200,

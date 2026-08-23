@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 
 const submissionSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
+    },
     assignmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Assignment',
@@ -34,5 +39,6 @@ const submissionSchema = new mongoose.Schema(
 );
 
 submissionSchema.index({ assignmentId: 1, studentId: 1 }, { unique: true });
+submissionSchema.index({ organizationId: 1 });
 
 export default mongoose.model('Submission', submissionSchema);

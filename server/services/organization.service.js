@@ -4,7 +4,7 @@ import Organization from '../models/organization.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/AppError.js';
 import { generateUniqueSlug } from '../utils/slug.js';
-import { sendVerificationEmail } from '../utils/email.js';
+import { queueVerificationEmail } from '../queues/email.queue.js';
 
 export const registerOrganization = async ({ orgName, adminName, email, password }) => {
   if (!orgName || !adminName || !email || !password) {
@@ -29,7 +29,7 @@ export const registerOrganization = async ({ orgName, adminName, email, password
     verificationCodeExpires: Date.now() + 10 * 60 * 1000
   });
 
-  await sendVerificationEmail(admin.email, verificationCode);
+  await queueVerificationEmail(admin.email, verificationCode);
 
   return {
     statusCode: 201,

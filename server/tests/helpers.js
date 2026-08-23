@@ -65,3 +65,18 @@ export const createCohortWithInstructor = async (admin, overrides = {}) => {
 
   return { res, cohortId: res.body.data?.cohort?.id, instructor };
 };
+
+export const createLectureForCohort = async (cohortId, instructorCookie, overrides = {}) => {
+  const moduleRes = await request(app)
+    .post(`/api/v1/cohorts/${cohortId}/modules`)
+    .set('Cookie', instructorCookie)
+    .send({ title: 'Module', orderIndex: 0 });
+  const moduleId = moduleRes.body.data.module.id;
+
+  const lectureRes = await request(app)
+    .post(`/api/v1/modules/${moduleId}/lectures`)
+    .set('Cookie', instructorCookie)
+    .send({ title: 'Lecture', orderIndex: 0, type: 'Recorded', ...overrides });
+
+  return { moduleId, lectureId: lectureRes.body.data.lecture.id };
+};

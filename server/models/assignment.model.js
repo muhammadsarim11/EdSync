@@ -2,6 +2,16 @@ import mongoose from 'mongoose';
 
 const assignmentSchema = new mongoose.Schema(
   {
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true
+    },
+    cohortId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Cohort',
+      required: true
+    },
     lectureId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Lecture',
@@ -34,5 +44,7 @@ const assignmentSchema = new mongoose.Schema(
 );
 
 assignmentSchema.index({ lectureId: 1 });
+assignmentSchema.index({ cohortId: 1 });
+assignmentSchema.index({ organizationId: 1 });
 
 export default mongoose.model('Assignment', assignmentSchema);

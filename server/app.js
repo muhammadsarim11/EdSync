@@ -12,6 +12,7 @@ import lectureRoutes from './routes/lecture.routes.js';
 import enrollmentRoutes from './routes/enrollment.routes.js';
 import assignmentRoutes from './routes/assignment.routes.js';
 import submissionRoutes from './routes/submission.routes.js';
+import questionRoutes from './routes/question.routes.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { generalLimiter, sanitizeInput } from './middlewares/security.middleware.js';
 
@@ -39,6 +40,7 @@ app.use('/api/v1/lectures', lectureRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1/assignments', assignmentRoutes);
 app.use('/api/v1/submissions', submissionRoutes);
+app.use('/api/v1/questions', questionRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

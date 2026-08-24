@@ -85,7 +85,8 @@ need an extra database round trip.
 
 ## API reference
 
-All routes are prefixed with `/api/v1`.
+All routes are prefixed with `/api/v1`. Tables below are a quick index; for full request/response
+bodies, error cases, and the Socket.io chat protocol, see [docs/API.md](docs/API.md).
 
 ### Organizations
 

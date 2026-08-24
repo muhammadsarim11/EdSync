@@ -92,6 +92,9 @@ All routes are prefixed with `/api/v1`.
 | Method | Path | Auth | Notes |
 |---|---|---|---|
 | POST | `/organizations` | none | Bootstrap a new institute + its first InstituteAdmin |
+| GET | `/organizations/me` | required | Branding for the caller's own organization (name, logo, theme color) |
+| PATCH | `/organizations/me` | InstituteAdmin | Update name / `logoUrl` / `themeColor` |
+| GET | `/organizations/me/dashboard` | InstituteAdmin | Cohort counts, enrolled student count, pending invite count |
 
 ### Auth
 
@@ -255,7 +258,8 @@ branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/.
 
 IAM (invite-only auth + admin user management), the Curriculum engine (Cohort/Module/Lecture CRUD
 + roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), Background Jobs
-(BullMQ/Redis email queue), and Real-Time (Socket.io chat + Q&A) are built. Not yet implemented:
+(BullMQ/Redis email queue), Real-Time (Socket.io chat + Q&A), and Tenant Configuration
+(branding endpoints + an org dashboard) are all built.
 
-- **Tenant Configuration** — branding/theme endpoints and an org dashboard. True subdomain
-  routing is Next.js middleware territory and lives outside this repo.
+True subdomain routing (e.g. `acme.edsync.com`) is Next.js middleware territory and intentionally
+lives outside this backend-only repo.

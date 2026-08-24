@@ -3,6 +3,7 @@ import { param } from 'express-validator';
 import { create, list, getOne, update, remove } from '../controllers/cohort.controller.js';
 import * as moduleController from '../controllers/module.controller.js';
 import * as enrollmentController from '../controllers/enrollment.controller.js';
+import * as questionController from '../controllers/question.controller.js';
 import { requireAuth, restrictTo } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validators/auth.validators.js';
 import {
@@ -12,6 +13,7 @@ import {
 } from '../middlewares/validators/cohort.validators.js';
 import { createModuleValidator } from '../middlewares/validators/module.validators.js';
 import { bulkEnrollValidator } from '../middlewares/validators/enrollment.validators.js';
+import { createQuestionValidator } from '../middlewares/validators/question.validators.js';
 
 const router = express.Router();
 
@@ -48,5 +50,8 @@ router.post(
   validate,
   enrollmentController.create
 );
+
+router.get('/:cohortId/questions', cohortIdPathValidator, validate, questionController.list);
+router.post('/:cohortId/questions', createQuestionValidator, validate, questionController.create);
 
 export default router;

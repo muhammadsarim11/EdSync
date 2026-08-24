@@ -159,6 +159,26 @@ computed at submission time, not by a cron sweep: `Late` if `now > assignment.de
 | GET | `/submissions/:id` | InstituteAdmin/assigned Instructor, or the submitting Student | A different student's submission 404s |
 | PATCH | `/submissions/:id/grade` | InstituteAdmin/assigned Instructor | Validates `obtainedMarks` against the assignment's `totalMarks`; sets status to `Graded` |
 
+### Real-time chat and Q&A
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| Socket | `join-cohort` | cohort visibility | Joins the `cohort:<id>` room, returns the last 50 messages as history |
+| Socket | `send-message` | must have joined the room first | Persists to Mongo, broadcasts `new-message` to the room |
+| GET/POST | `/cohorts/:cohortId/questions` | any cohort member | Post/list a doubt-board question |
+| GET | `/questions/:id` | any cohort member | |
+| POST | `/questions/:id/replies` | any cohort member | Any enrolled Student or the Instructor may answer |
+| PATCH | `/questions/:id/resolve` | the question's author, or InstituteAdmin/assigned Instructor | |
+
+Chat is Socket.io, not REST, since it's a live-typing concern; Q&A is plain REST since posting
+and resolving a question isn't. Both reuse the same Cohort-rooted authorization as everything
+else — `services/cohort.service.js`'s `findCohortOrFail`/`assertCanViewCohort` decide who can
+join a chat room or see/post in a cohort's Q&A, the same functions Module/Lecture/Assignment
+already use. The socket handshake authenticates with the identical JWT-cookie check as
+`requireAuth` (`resolveUserFromToken` in `middlewares/auth.middleware.js`), not a second
+mechanism. A `Question` embeds its replies as a subdocument array rather than a separate
+collection.
+
 ## Background jobs
 
 Verification, invitation, and password-reset emails no longer send synchronously inline - the
@@ -211,6 +231,10 @@ spinning up an ephemeral one.
 Outbound email (`utils/email.js`) is mocked in tests (`tests/setup.js`); no real email is ever
 sent by the suite.
 
+The chat suite (`tests/chat.test.js`) is the one exception to "tests hit `app.js` directly with
+no port bound" — Supertest can't drive a Socket.io handshake, so it binds a real `http.Server` to
+an ephemeral port and connects with `socket.io-client`, closing both in `afterAll`.
+
 ## Linting & formatting
 
 ```bash
@@ -230,9 +254,8 @@ branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/.
 ## Roadmap
 
 IAM (invite-only auth + admin user management), the Curriculum engine (Cohort/Module/Lecture CRUD
-+ roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), and Background
-Jobs (BullMQ/Redis email queue) are built. Not yet implemented:
++ roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), Background Jobs
+(BullMQ/Redis email queue), and Real-Time (Socket.io chat + Q&A) are built. Not yet implemented:
 
-- **Real-Time** — Socket.io chat and a Q&A board per cohort.
 - **Tenant Configuration** — branding/theme endpoints and an org dashboard. True subdomain
   routing is Next.js middleware territory and lives outside this repo.

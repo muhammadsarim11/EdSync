@@ -7,7 +7,8 @@ import {
   resetPasswordUser,
   resendVerificationCodeUser,
   resendPasswordResetCodeUser,
-  changePasswordUser
+  changePasswordUser,
+  getCurrentUser
 } from '../services/auth.service.js';
 
 export const register = catchAsync(async (req, res) => {
@@ -49,6 +50,11 @@ export const changePassword = catchAsync(async (req, res) => {
     currentPassword: req.body.currentPassword,
     newPassword: req.body.newPassword
   });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const getMe = catchAsync(async (req, res) => {
+  const result = await getCurrentUser({ user: req.user });
   res.status(result.statusCode).json(result.payload);
 });
 

@@ -8,6 +8,7 @@ import {
   resetPassword,
   resendPasswordResetCode,
   changePassword,
+  getMe,
   logout
 } from '../controllers/user.authcontroller.js';
 import { requireAuth } from '../middlewares/auth.middleware.js';
@@ -46,6 +47,7 @@ router.post(
   resendPasswordResetCode
 );
 router.post('/change-password', requireAuth, changePasswordValidator, validate, changePassword);
+router.get('/me', requireAuth, getMe);
 router.post('/logout', logout);
 
 export default router;

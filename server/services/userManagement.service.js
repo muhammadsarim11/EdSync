@@ -1,7 +1,7 @@
 import User from '../models/user.model.js';
 import AppError from '../utils/AppError.js';
 
-const shapeUser = (user) => ({
+export const shapeUser = (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,

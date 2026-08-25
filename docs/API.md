@@ -139,6 +139,18 @@ The admin account is created with `isEmailVerified: false`; a 6-digit code is em
 see [Background jobs](#background-jobs)) and must be confirmed via
 `POST /auth/verify-email` before the admin can log in.
 
+### `GET /organizations/lookup`
+
+Public — no auth. Resolves a human-typeable `slug` (e.g. `springfield-institute`) to the
+organization ID every other auth endpoint requires. Exists because login/verify/reset all take a
+raw `organizationId`, which no user could ever know or type on their own; this is the one public,
+low-sensitivity way to get from "the name of my institute" to that ID. Rate limit: `authLimiter`.
+
+**Query**: `?slug=springfield-institute`
+
+**200** `{ status, data: { organization: { id, name, logoUrl } } }` — no other organization fields
+are exposed. **404** if no organization has that slug. **400** if `slug` is missing.
+
 ### `GET /organizations/me`
 
 Branding for the caller's own organization. Auth: any authenticated role — students and

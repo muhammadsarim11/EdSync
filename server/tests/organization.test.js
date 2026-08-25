@@ -3,6 +3,33 @@ import request from 'supertest';
 import app from '../app.js';
 import { createVerifiedOrgAdmin, inviteAndRegister, createCohortWithInstructor } from './helpers.js';
 
+describe('GET /api/v1/organizations/lookup', () => {
+  it('resolves a valid slug to non-sensitive organization info', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    const meRes = await request(app).get('/api/v1/organizations/me').set('Cookie', admin.cookie);
+    const { slug } = meRes.body.data.organization;
+
+    const res = await request(app).get('/api/v1/organizations/lookup').query({ slug });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.organization).toEqual({
+      id: admin.organizationId,
+      name: admin.orgName,
+      logoUrl: ''
+    });
+  });
+
+  it('returns 404 for an unknown slug', async () => {
+    const res = await request(app).get('/api/v1/organizations/lookup').query({ slug: 'no-such-institute' });
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects a missing slug', async () => {
+    const res = await request(app).get('/api/v1/organizations/lookup');
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('GET /api/v1/organizations/me', () => {
   it('returns branding for any authenticated member of the organization', async () => {
     const admin = await createVerifiedOrgAdmin();

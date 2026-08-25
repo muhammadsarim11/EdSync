@@ -93,6 +93,7 @@ bodies, error cases, and the Socket.io chat protocol, see [docs/API.md](docs/API
 | Method | Path                          | Auth           | Notes                                                                |
 | ------ | ----------------------------- | -------------- | -------------------------------------------------------------------- |
 | POST   | `/organizations`              | none           | Bootstrap a new institute + its first InstituteAdmin                 |
+| GET    | `/organizations/lookup`       | none           | Resolve a `slug` to `{id, name, logoUrl}` for login/verify/reset forms |
 | GET    | `/organizations/me`           | required       | Branding for the caller's own organization (name, logo, theme color) |
 | PATCH  | `/organizations/me`           | InstituteAdmin | Update name / `logoUrl` / `themeColor`                               |
 | GET    | `/organizations/me/dashboard` | InstituteAdmin | Cohort counts, enrolled student count, pending invite count          |

@@ -1,4 +1,8 @@
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
+
+export const lookupOrganizationValidator = [
+  query('slug').trim().notEmpty().withMessage('A slug is required.')
+];
 
 export const updateOrganizationValidator = [
   body('name').optional().trim().notEmpty().withMessage('Organization name cannot be empty.'),

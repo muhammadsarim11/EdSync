@@ -1,6 +1,7 @@
 import { catchAsync } from '../utils/catchAsync.js';
 import {
   registerOrganization,
+  lookupOrganizationBySlug,
   getMyOrganization,
   updateMyOrganization,
   getMyOrganizationDashboard
@@ -13,6 +14,11 @@ export const createOrganization = catchAsync(async (req, res) => {
     email: req.body.email,
     password: req.body.password
   });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const lookupOrganization = catchAsync(async (req, res) => {
+  const result = await lookupOrganizationBySlug({ slug: req.query.slug });
   res.status(result.statusCode).json(result.payload);
 });
 

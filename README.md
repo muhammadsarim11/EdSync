@@ -52,16 +52,16 @@ other instance).
 
 ### Environment variables
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `PORT` | no (default `5000`) | HTTP port |
-| `NODE_ENV` | no | `development` shows full error detail; anything else hides it |
-| `MONGO_URI` | yes | Mongo connection string |
-| `JWT_SECRET` | yes | Signs the auth cookie's JWT |
-| `EMAIL_USER` | yes | Gmail address used to send verification/invite/reset emails |
-| `EMAIL_APP_PASS` | yes | Gmail App Password for `EMAIL_USER` |
-| `CLIENT_URL` | no (default `http://localhost:3000`) | CORS origin, and the base URL invite links point at |
-| `REDIS_URL` | yes | Backs the BullMQ email queue (`docker compose up -d redis` for local dev) |
+| Variable         | Required                             | Purpose                                                                   |
+| ---------------- | ------------------------------------ | ------------------------------------------------------------------------- |
+| `PORT`           | no (default `5000`)                  | HTTP port                                                                 |
+| `NODE_ENV`       | no                                   | `development` shows full error detail; anything else hides it             |
+| `MONGO_URI`      | yes                                  | Mongo connection string                                                   |
+| `JWT_SECRET`     | yes                                  | Signs the auth cookie's JWT                                               |
+| `EMAIL_USER`     | yes                                  | Gmail address used to send verification/invite/reset emails               |
+| `EMAIL_APP_PASS` | yes                                  | Gmail App Password for `EMAIL_USER`                                       |
+| `CLIENT_URL`     | no (default `http://localhost:3000`) | CORS origin, and the base URL invite links point at                       |
+| `REDIS_URL`      | yes                                  | Backs the BullMQ email queue (`docker compose up -d redis` for local dev) |
 
 The server fails fast at startup (`config/validateEnv.js`) if any required variable is missing,
 rather than silently falling back to a default.
@@ -90,42 +90,43 @@ bodies, error cases, and the Socket.io chat protocol, see [docs/API.md](docs/API
 
 ### Organizations
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/organizations` | none | Bootstrap a new institute + its first InstituteAdmin |
-| GET | `/organizations/me` | required | Branding for the caller's own organization (name, logo, theme color) |
-| PATCH | `/organizations/me` | InstituteAdmin | Update name / `logoUrl` / `themeColor` |
-| GET | `/organizations/me/dashboard` | InstituteAdmin | Cohort counts, enrolled student count, pending invite count |
+| Method | Path                          | Auth           | Notes                                                                |
+| ------ | ----------------------------- | -------------- | -------------------------------------------------------------------- |
+| POST   | `/organizations`              | none           | Bootstrap a new institute + its first InstituteAdmin                 |
+| GET    | `/organizations/me`           | required       | Branding for the caller's own organization (name, logo, theme color) |
+| PATCH  | `/organizations/me`           | InstituteAdmin | Update name / `logoUrl` / `themeColor`                               |
+| GET    | `/organizations/me/dashboard` | InstituteAdmin | Cohort counts, enrolled student count, pending invite count          |
 
 ### Auth
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/auth/register` | invite token | Accept an invite and create the account |
-| POST | `/auth/verify-email` | none | Confirm the emailed 6-digit code |
-| POST | `/auth/resend-verification-code` | none | Generic response either way (no account enumeration) |
-| POST | `/auth/login` | none | Sets the JWT cookie |
-| POST | `/auth/forgot-password` | none | Generic response either way (no account enumeration) |
-| POST | `/auth/reset-password` | none | Requires the emailed 6-digit code |
-| POST | `/auth/resend-password-reset-code` | none | Generic response either way (no account enumeration) |
-| POST | `/auth/change-password` | required | Requires the current password |
-| POST | `/auth/logout` | none | Clears the JWT cookie |
+| Method | Path                               | Auth         | Notes                                                                    |
+| ------ | ---------------------------------- | ------------ | ------------------------------------------------------------------------ |
+| POST   | `/auth/register`                   | invite token | Accept an invite and create the account                                  |
+| POST   | `/auth/verify-email`               | none         | Confirm the emailed 6-digit code                                         |
+| POST   | `/auth/resend-verification-code`   | none         | Generic response either way (no account enumeration)                     |
+| POST   | `/auth/login`                      | none         | Sets the JWT cookie                                                      |
+| POST   | `/auth/forgot-password`            | none         | Generic response either way (no account enumeration)                     |
+| POST   | `/auth/reset-password`             | none         | Requires the emailed 6-digit code                                        |
+| POST   | `/auth/resend-password-reset-code` | none         | Generic response either way (no account enumeration)                     |
+| POST   | `/auth/change-password`            | required     | Requires the current password                                            |
+| GET    | `/auth/me`                         | required     | Current session's user — used by clients to rehydrate auth state on load |
+| POST   | `/auth/logout`                     | none         | Clears the JWT cookie                                                    |
 
 ### Invitations
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/invitations` | InstituteAdmin | Invite a user by email + role; supersedes any existing pending invite for that email |
-| GET | `/invitations` | InstituteAdmin | List invitations for the caller's org |
-| DELETE | `/invitations/:id` | InstituteAdmin | Revoke a pending invitation |
+| Method | Path               | Auth           | Notes                                                                                |
+| ------ | ------------------ | -------------- | ------------------------------------------------------------------------------------ |
+| POST   | `/invitations`     | InstituteAdmin | Invite a user by email + role; supersedes any existing pending invite for that email |
+| GET    | `/invitations`     | InstituteAdmin | List invitations for the caller's org                                                |
+| DELETE | `/invitations/:id` | InstituteAdmin | Revoke a pending invitation                                                          |
 
 ### Users
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET | `/users` | InstituteAdmin | List the caller's org, filterable by `?role=` / `?status=active\|suspended` |
-| PATCH | `/users/:id/suspend` | InstituteAdmin | Blocks the target's access immediately (`requireAuth` checks `isActive` on every request). Can target a peer InstituteAdmin, never self |
-| PATCH | `/users/:id/reactivate` | InstituteAdmin | Restores access |
+| Method | Path                    | Auth           | Notes                                                                                                                                   |
+| ------ | ----------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/users`                | InstituteAdmin | List the caller's org, filterable by `?role=` / `?status=active\|suspended`                                                             |
+| PATCH  | `/users/:id/suspend`    | InstituteAdmin | Blocks the target's access immediately (`requireAuth` checks `isActive` on every request). Can target a peer InstituteAdmin, never self |
+| PATCH  | `/users/:id/reactivate` | InstituteAdmin | Restores access                                                                                                                         |
 
 ### Cohorts, Modules, Lectures
 
@@ -134,18 +135,18 @@ Cohort is the tenancy root for the curriculum tree — Module/Lecture authorizat
 or a Student who isn't enrolled gets 404, not 403, so these endpoints never confirm another
 tenant's or instructor's data exists.
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| POST | `/cohorts` | InstituteAdmin | `instructorId` must reference an existing Instructor in the org |
-| GET | `/cohorts` | any role | Admin sees all; Instructor sees their own; Student sees only cohorts they're enrolled in |
-| GET/PATCH/DELETE | `/cohorts/:id` | InstituteAdmin or the assigned Instructor for write; view follows the same rule as the list | DELETE is blocked (409) while the cohort still has enrollments or modules |
-| GET/POST | `/cohorts/:cohortId/modules` | view: same as cohort; create: InstituteAdmin/assigned Instructor | |
-| GET/PATCH/DELETE | `/modules/:id` | same as above | DELETE blocked (409) while it still has lectures |
-| GET/POST | `/modules/:moduleId/lectures` | same as above | |
-| GET/PATCH/DELETE | `/lectures/:id` | same as above | `videoUrl`/`resourceUrl` are plain URL fields for now (e.g. a Cloudinary or GitHub link) — no server-side upload handling yet |
-| POST | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor | Bulk-enrolls a roster of `studentIds`; already-enrolled ids are skipped, not errored |
-| GET | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor | Roster with student name/email populated |
-| DELETE | `/enrollments/:id` | InstituteAdmin/assigned Instructor | Unenrolls one student |
+| Method           | Path                             | Auth                                                                                        | Notes                                                                                                                         |
+| ---------------- | -------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| POST             | `/cohorts`                       | InstituteAdmin                                                                              | `instructorId` must reference an existing Instructor in the org                                                               |
+| GET              | `/cohorts`                       | any role                                                                                    | Admin sees all; Instructor sees their own; Student sees only cohorts they're enrolled in                                      |
+| GET/PATCH/DELETE | `/cohorts/:id`                   | InstituteAdmin or the assigned Instructor for write; view follows the same rule as the list | DELETE is blocked (409) while the cohort still has enrollments or modules                                                     |
+| GET/POST         | `/cohorts/:cohortId/modules`     | view: same as cohort; create: InstituteAdmin/assigned Instructor                            |                                                                                                                               |
+| GET/PATCH/DELETE | `/modules/:id`                   | same as above                                                                               | DELETE blocked (409) while it still has lectures                                                                              |
+| GET/POST         | `/modules/:moduleId/lectures`    | same as above                                                                               |                                                                                                                               |
+| GET/PATCH/DELETE | `/lectures/:id`                  | same as above                                                                               | `videoUrl`/`resourceUrl` are plain URL fields for now (e.g. a Cloudinary or GitHub link) — no server-side upload handling yet |
+| POST             | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor                                                          | Bulk-enrolls a roster of `studentIds`; already-enrolled ids are skipped, not errored                                          |
+| GET              | `/cohorts/:cohortId/enrollments` | InstituteAdmin/assigned Instructor                                                          | Roster with student name/email populated                                                                                      |
+| DELETE           | `/enrollments/:id`               | InstituteAdmin/assigned Instructor                                                          | Unenrolls one student                                                                                                         |
 
 ### Assignments, Submissions
 
@@ -154,25 +155,25 @@ from Module, so grading/ownership checks stay one Cohort lookup deep. Submission
 computed at submission time, not by a cron sweep: `Late` if `now > assignment.deadline`,
 `Submitted` otherwise, `Graded` once an instructor grades it.
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| GET/POST | `/lectures/:lectureId/assignments` | view: cohort visibility; create: InstituteAdmin/assigned Instructor | |
-| GET/PATCH/DELETE | `/assignments/:id` | same as above | DELETE blocked (409) while it still has submissions |
-| POST | `/assignments/:assignmentId/submissions` | Student only | Requires actual enrollment in the assignment's cohort (404 otherwise); one submission per student, enforced by both a friendly 409 precheck and a unique `assignmentId+studentId` index |
-| GET | `/assignments/:assignmentId/submissions` | any role | InstituteAdmin/assigned Instructor see every submission (populated with student name/email); a Student sees only their own |
-| GET | `/submissions/:id` | InstituteAdmin/assigned Instructor, or the submitting Student | A different student's submission 404s |
-| PATCH | `/submissions/:id/grade` | InstituteAdmin/assigned Instructor | Validates `obtainedMarks` against the assignment's `totalMarks`; sets status to `Graded` |
+| Method           | Path                                     | Auth                                                                | Notes                                                                                                                                                                                   |
+| ---------------- | ---------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET/POST         | `/lectures/:lectureId/assignments`       | view: cohort visibility; create: InstituteAdmin/assigned Instructor |                                                                                                                                                                                         |
+| GET/PATCH/DELETE | `/assignments/:id`                       | same as above                                                       | DELETE blocked (409) while it still has submissions                                                                                                                                     |
+| POST             | `/assignments/:assignmentId/submissions` | Student only                                                        | Requires actual enrollment in the assignment's cohort (404 otherwise); one submission per student, enforced by both a friendly 409 precheck and a unique `assignmentId+studentId` index |
+| GET              | `/assignments/:assignmentId/submissions` | any role                                                            | InstituteAdmin/assigned Instructor see every submission (populated with student name/email); a Student sees only their own                                                              |
+| GET              | `/submissions/:id`                       | InstituteAdmin/assigned Instructor, or the submitting Student       | A different student's submission 404s                                                                                                                                                   |
+| PATCH            | `/submissions/:id/grade`                 | InstituteAdmin/assigned Instructor                                  | Validates `obtainedMarks` against the assignment's `totalMarks`; sets status to `Graded`                                                                                                |
 
 ### Real-time chat and Q&A
 
-| Method | Path | Auth | Notes |
-|---|---|---|---|
-| Socket | `join-cohort` | cohort visibility | Joins the `cohort:<id>` room, returns the last 50 messages as history |
-| Socket | `send-message` | must have joined the room first | Persists to Mongo, broadcasts `new-message` to the room |
-| GET/POST | `/cohorts/:cohortId/questions` | any cohort member | Post/list a doubt-board question |
-| GET | `/questions/:id` | any cohort member | |
-| POST | `/questions/:id/replies` | any cohort member | Any enrolled Student or the Instructor may answer |
-| PATCH | `/questions/:id/resolve` | the question's author, or InstituteAdmin/assigned Instructor | |
+| Method   | Path                           | Auth                                                         | Notes                                                                 |
+| -------- | ------------------------------ | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Socket   | `join-cohort`                  | cohort visibility                                            | Joins the `cohort:<id>` room, returns the last 50 messages as history |
+| Socket   | `send-message`                 | must have joined the room first                              | Persists to Mongo, broadcasts `new-message` to the room               |
+| GET/POST | `/cohorts/:cohortId/questions` | any cohort member                                            | Post/list a doubt-board question                                      |
+| GET      | `/questions/:id`               | any cohort member                                            |                                                                       |
+| POST     | `/questions/:id/replies`       | any cohort member                                            | Any enrolled Student or the Instructor may answer                     |
+| PATCH    | `/questions/:id/resolve`       | the question's author, or InstituteAdmin/assigned Instructor |                                                                       |
 
 Chat is Socket.io, not REST, since it's a live-typing concern; Q&A is plain REST since posting
 and resolving a question isn't. Both reuse the same Cohort-rooted authorization as everything
@@ -258,9 +259,10 @@ branches merged back via a `--no-ff` merge (e.g. `feat/...`, `fix/...`, `chore/.
 ## Roadmap
 
 IAM (invite-only auth + admin user management), the Curriculum engine (Cohort/Module/Lecture CRUD
-+ roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), Background Jobs
-(BullMQ/Redis email queue), Real-Time (Socket.io chat + Q&A), and Tenant Configuration
-(branding endpoints + an org dashboard) are all built.
+
+- roster enrollment), Assessment & Grading (Assignment/Submission CRUD + grading), Background Jobs
+  (BullMQ/Redis email queue), Real-Time (Socket.io chat + Q&A), and Tenant Configuration
+  (branding endpoints + an org dashboard) are all built.
 
 True subdomain routing (e.g. `acme.edsync.com`) is Next.js middleware territory and intentionally
 lives outside this backend-only repo.

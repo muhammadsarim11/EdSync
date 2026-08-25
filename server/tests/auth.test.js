@@ -128,6 +128,24 @@ describe('account enumeration protection', () => {
   });
 });
 
+describe('GET /api/v1/auth/me', () => {
+  it('returns the shaped current user when logged in', async () => {
+    const admin = await createVerifiedOrgAdmin();
+
+    const res = await request(app).get('/api/v1/auth/me').set('Cookie', admin.cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.user.email).toBe(admin.email);
+    expect(res.body.data.user.role).toBe('InstituteAdmin');
+    expect(res.body.data.user.password).toBeUndefined();
+  });
+
+  it('rejects a request with no session', async () => {
+    const res = await request(app).get('/api/v1/auth/me');
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('error handling pipeline', () => {
   it('returns a structured 404 for unknown routes', async () => {
     const res = await request(app).post('/api/v1/auth/does-not-exist');

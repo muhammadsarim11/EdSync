@@ -38,7 +38,7 @@ need a valid session; endpoints listing specific roles require one of those role
 List endpoints add a `results` count alongside `data`:
 
 ```json
-{ "status": "success", "results": 3, "data": { "cohorts": [ "..." ] } }
+{ "status": "success", "results": 3, "data": { "cohorts": ["..."] } }
 ```
 
 Some action endpoints (delete, revoke, logout) return `message` instead of `data`.
@@ -55,25 +55,25 @@ failures, and not-found all return this same envelope, distinguished by `message
 status code.
 
 **Authorization pattern — 404 over 403**: for anything scoped under a Cohort (modules, lectures,
-assignments, submissions, questions, chat), a user who *exists* but lacks access (a non-owning
+assignments, submissions, questions, chat), a user who _exists_ but lacks access (a non-owning
 Instructor, an unenrolled Student) gets a **404**, not a 403. This is deliberate: it means a
 Cohort's existence and a user's lack of access to it are indistinguishable from the outside, so
 enumerating other tenants' or other instructors' cohort IDs reveals nothing.
 
 **Common status codes**:
 
-| Code | Meaning here |
-|---|---|
-| 400 | Validation failure (bad shape, bad enum value, business-rule violation like grading over `totalMarks`) |
-| 401 | Missing/invalid/expired credentials or token |
-| 403 | Authenticated, but role-forbidden (e.g. a Student hitting an admin-only route) |
-| 404 | Resource not found, not in this tenant, or access-hidden (see above) |
-| 409 | Conflict — duplicate submission, already-used invite, deleting a cohort that still has enrollments, etc. |
-| 429 | Rate limited (see [Rate limits](#rate-limits)) |
+| Code | Meaning here                                                                                             |
+| ---- | -------------------------------------------------------------------------------------------------------- |
+| 400  | Validation failure (bad shape, bad enum value, business-rule violation like grading over `totalMarks`)   |
+| 401  | Missing/invalid/expired credentials or token                                                             |
+| 403  | Authenticated, but role-forbidden (e.g. a Student hitting an admin-only route)                           |
+| 404  | Resource not found, not in this tenant, or access-hidden (see above)                                     |
+| 409  | Conflict — duplicate submission, already-used invite, deleting a cohort that still has enrollments, etc. |
+| 429  | Rate limited (see [Rate limits](#rate-limits))                                                           |
 
 **Rate limits**: a general limiter applies to all of `/api/*`. Auth routes (`/auth/*`,
 `/organizations` register) carry a stricter `authLimiter`; `/auth/login` specifically uses a
-`loginLimiter` that only counts *failed* attempts, so a burst of correct logins is never
+`loginLimiter` that only counts _failed_ attempts, so a burst of correct logins is never
 throttled. All limiters are disabled under `NODE_ENV=test`.
 
 ---
@@ -111,7 +111,12 @@ Rate limit: `authLimiter`.
 **Body**
 
 ```json
-{ "orgName": "Springfield Institute", "adminName": "Ada Admin", "email": "ada@example.com", "password": "at-least-8-chars" }
+{
+  "orgName": "Springfield Institute",
+  "adminName": "Ada Admin",
+  "email": "ada@example.com",
+  "password": "at-least-8-chars"
+}
 ```
 
 **201**
@@ -120,7 +125,13 @@ Rate limit: `authLimiter`.
 {
   "status": "success",
   "message": "Institute created. Verification code sent to the admin email. Please verify before logging in.",
-  "data": { "organization": { "id": "...", "name": "Springfield Institute", "slug": "springfield-institute" } }
+  "data": {
+    "organization": {
+      "id": "...",
+      "name": "Springfield Institute",
+      "slug": "springfield-institute"
+    }
+  }
 }
 ```
 
@@ -158,7 +169,11 @@ Update branding. Auth: `InstituteAdmin`. All fields optional — send only what 
 **Body**
 
 ```json
-{ "name": "New Name", "logoUrl": "https://cdn.example.com/logo.png", "themeColor": "#1A2B3C" }
+{
+  "name": "New Name",
+  "logoUrl": "https://cdn.example.com/logo.png",
+  "themeColor": "#1A2B3C"
+}
 ```
 
 `logoUrl` must be a valid URL if present (no server-side upload handling — host the image
@@ -205,7 +220,12 @@ token (see [Invitations](#invitations)).
 **Body**
 
 ```json
-{ "name": "Ivy Instructor", "email": "ivy@example.com", "password": "at-least-8-chars", "inviteToken": "..." }
+{
+  "name": "Ivy Instructor",
+  "email": "ivy@example.com",
+  "password": "at-least-8-chars",
+  "inviteToken": "..."
+}
 ```
 
 **201** — same shape as login (below): sets the `jwt` cookie, returns `token` and the raw user
@@ -238,7 +258,21 @@ attempts count).
 **200**
 
 ```json
-{ "status": "success", "token": "eyJ...", "data": { "user": { "_id": "...", "name": "...", "email": "...", "role": "Student", "organizationId": "...", "isActive": true, "isEmailVerified": true } } }
+{
+  "status": "success",
+  "token": "eyJ...",
+  "data": {
+    "user": {
+      "_id": "...",
+      "name": "...",
+      "email": "...",
+      "role": "Student",
+      "organizationId": "...",
+      "isActive": true,
+      "isEmailVerified": true
+    }
+  }
+}
 ```
 
 Sets the `jwt` cookie. 401 for wrong credentials, 403 for an unverified or suspended account.
@@ -257,6 +291,16 @@ code, 401 wrong code, 404 no such account.
 
 Auth: required. **Body**: `{ "currentPassword", "newPassword" }` — **200**. 401 if
 `currentPassword` doesn't match.
+
+### `GET /auth/me`
+
+Auth: required. The one endpoint built specifically for a client to rehydrate session state after
+a page load — the `jwt` cookie is `httpOnly`, so client-side JS can't otherwise tell who (or
+whether) a user is logged in.
+
+**200** `{ status, data: { user: { id, name, email, role, isActive, isEmailVerified, organizationId, createdAt } } }`
+(same shape as the user-management endpoints — not the raw document login/register return). 401
+if there's no valid session.
 
 ### `POST /auth/logout`
 
@@ -282,7 +326,15 @@ is marked `Revoked`, not deleted).
 {
   "status": "success",
   "message": "Invitation sent.",
-  "data": { "invitation": { "id": "...", "email": "...", "role": "Instructor", "status": "Pending", "expiresAt": "..." } }
+  "data": {
+    "invitation": {
+      "id": "...",
+      "email": "...",
+      "role": "Instructor",
+      "status": "Pending",
+      "expiresAt": "..."
+    }
+  }
 }
 ```
 
@@ -314,7 +366,7 @@ both optional.
 
 ### `PATCH /users/:id/suspend` / `PATCH /users/:id/reactivate`
 
-Flips `isActive`. A suspended user's *existing* session stops working on their very next request —
+Flips `isActive`. A suspended user's _existing_ session stops working on their very next request —
 `requireAuth` checks `isActive` every time, so there's no token blacklist to maintain. An admin
 cannot suspend their own account (400, checked before the org-scoped lookup so it never leaks
 whether an ID belongs to this org).
@@ -330,11 +382,11 @@ isn't in the admin's org.
 Assignment, Submission, Question, and chat rooms all resolve their authorization back to "can this
 user manage/view this Cohort."
 
-| Rule | |
-|---|---|
-| Create | `InstituteAdmin` only, must assign a real `instructorId` (an Instructor in this org) |
-| Manage (update/delete/create children) | `InstituteAdmin`, or the assigned Instructor |
-| View | the above, plus any Student enrolled in it |
+| Rule                                   |                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------ |
+| Create                                 | `InstituteAdmin` only, must assign a real `instructorId` (an Instructor in this org) |
+| Manage (update/delete/create children) | `InstituteAdmin`, or the assigned Instructor                                         |
+| View                                   | the above, plus any Student enrolled in it                                           |
 
 ### `POST /cohorts`
 
@@ -531,6 +583,7 @@ server-side upload).
 ### `GET /assignments/:assignmentId/submissions`
 
 One endpoint, two audiences:
+
 - **Student**: sees only their own submission (an array of 0 or 1).
 - **InstituteAdmin / owning Instructor**: sees every submission, each populated with
   `student: { id, name, email }` instead of a bare `studentId`.
@@ -579,8 +632,7 @@ Auth: anyone who can view the parent cohort. **Body**: `{ "body" }`.
 ### `PATCH /questions/:id/resolve`
 
 Auth: the question's original author (any role, including the Student who asked it), **or**
-`InstituteAdmin`/the owning `Instructor`. A different Student — not the author, not staff — gets
-404.
+`InstituteAdmin`/the owning `Instructor`. A different Student — not the author, not staff — gets 404.
 
 **200** — question with `status: "Resolved"`.
 
@@ -597,8 +649,8 @@ a `connect_error` event, using the exact same verification logic (`resolveUserFr
 `requireAuth`.
 
 ```js
-import { io } from 'socket.io-client';
-const socket = io('https://your-api-host', { withCredentials: true });
+import { io } from "socket.io-client";
+const socket = io("https://your-api-host", { withCredentials: true });
 ```
 
 ### `join-cohort` (emit, with ack)
@@ -641,15 +693,15 @@ to a logged failure rather than a failed request.
 
 ## Environment variables
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `PORT` | no (default 5000) | HTTP port |
-| `NODE_ENV` | no | `development` \| `production` \| `test` — affects error verbosity, cookie flags, and disables rate limiters/queues under `test` |
-| `MONGO_URI` | yes | MongoDB connection string |
-| `JWT_SECRET` | yes | Signs/verifies auth tokens |
-| `EMAIL_USER` / `EMAIL_APP_PASS` | yes | Gmail sender for verification/invite/reset emails |
-| `CLIENT_URL` | no (default `http://localhost:3000`) | CORS origin, and the base URL invite links point to |
-| `REDIS_URL` | yes | BullMQ connection for the background email queue |
+| Variable                        | Required                             | Purpose                                                                                                                         |
+| ------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                          | no (default 5000)                    | HTTP port                                                                                                                       |
+| `NODE_ENV`                      | no                                   | `development` \| `production` \| `test` — affects error verbosity, cookie flags, and disables rate limiters/queues under `test` |
+| `MONGO_URI`                     | yes                                  | MongoDB connection string                                                                                                       |
+| `JWT_SECRET`                    | yes                                  | Signs/verifies auth tokens                                                                                                      |
+| `EMAIL_USER` / `EMAIL_APP_PASS` | yes                                  | Gmail sender for verification/invite/reset emails                                                                               |
+| `CLIENT_URL`                    | no (default `http://localhost:3000`) | CORS origin, and the base URL invite links point to                                                                             |
+| `REDIS_URL`                     | yes                                  | BullMQ connection for the background email queue                                                                                |
 
 `validateEnv()` fails fast at startup if any required variable is missing — see
 `server/config/validateEnv.js`.

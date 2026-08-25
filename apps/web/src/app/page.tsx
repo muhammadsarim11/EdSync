@@ -1,6 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
 export default function Home() {
@@ -13,7 +15,20 @@ export default function Home() {
       {isLoading && <p className="text-muted-foreground">Checking session…</p>}
 
       {!isLoading && !user && (
-        <p className="text-muted-foreground">Not logged in.</p>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-muted-foreground">Not logged in.</p>
+          <div className="flex gap-2">
+            <Link href="/login" className={cn(buttonVariants())}>
+              Log in
+            </Link>
+            <Link
+              href="/signup"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Create an institute
+            </Link>
+          </div>
+        </div>
       )}
 
       {!isLoading && user && (

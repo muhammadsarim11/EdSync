@@ -46,8 +46,115 @@ export type User = {
   createdAt: string;
 };
 
+export type OrganizationSummary = {
+  id: string;
+  name: string;
+  logoUrl: string;
+};
+
+// -- Session --------------------------------------------------------------
+
 export const getMe = () =>
   request<{ status: "success"; data: { user: User } }>("/auth/me");
 
 export const logout = () =>
   request<{ status: "success" }>("/auth/logout", { method: "POST" });
+
+// -- Organizations ----------------------------------------------------------
+
+export const lookupOrganization = (slug: string) =>
+  request<{ status: "success"; data: { organization: OrganizationSummary } }>(
+    `/organizations/lookup?slug=${encodeURIComponent(slug)}`,
+  );
+
+export const createOrganization = (input: {
+  orgName: string;
+  adminName: string;
+  email: string;
+  password: string;
+}) =>
+  request<{
+    status: "success";
+    message: string;
+    data: { organization: { id: string; name: string; slug: string } };
+  }>("/organizations", { method: "POST", body: JSON.stringify(input) });
+
+// -- Auth ---------------------------------------------------------------
+
+export const login = (input: {
+  email: string;
+  password: string;
+  organizationId: string;
+}) =>
+  request<{ status: "success"; token: string; data: { user: User } }>(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const registerFromInvite = (input: {
+  name: string;
+  email: string;
+  password: string;
+  inviteToken: string;
+}) =>
+  request<{ status: "success"; data: { user: User } }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const verifyEmail = (input: {
+  email: string;
+  organizationId: string;
+  code: string;
+}) =>
+  request<{ status: "success"; message: string }>("/auth/verify-email", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const resendVerificationCode = (input: {
+  email: string;
+  organizationId: string;
+}) =>
+  request<{ status: "success"; message: string }>(
+    "/auth/resend-verification-code",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const forgotPassword = (input: {
+  email: string;
+  organizationId: string;
+}) =>
+  request<{ status: "success"; message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const resetPassword = (input: {
+  email: string;
+  organizationId: string;
+  code: string;
+  newPassword: string;
+}) =>
+  request<{ status: "success"; message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const resendPasswordResetCode = (input: {
+  email: string;
+  organizationId: string;
+}) =>
+  request<{ status: "success"; message: string }>(
+    "/auth/resend-password-reset-code",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );

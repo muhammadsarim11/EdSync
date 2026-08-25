@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EdSync Client
 
-## Getting Started
+The frontend for [EdSync](https://github.com/muhammadsarim11/EdSync), a multi-tenant LMS backend.
+Deployed separately from the API — this repo on Vercel, the API on Render.
 
-First, run the development server:
+## Stack
+
+- **Framework:** Next.js (App Router) + TypeScript
+- **Styling:** Tailwind CSS + shadcn/ui
+- **Data fetching:** TanStack Query, over a small typed client in `src/lib/api.ts`
+- **Auth:** session cookie set by the API (`httpOnly`, cross-site in production); `src/lib/auth.tsx`
+  rehydrates it on load via `GET /auth/me` and exposes a `useAuth()` hook
+
+## Getting started
 
 ```bash
+npm install
+cp .env.local.example .env.local   # point NEXT_PUBLIC_API_URL at your running API
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires the [EdSync API](https://github.com/muhammadsarim11/EdSync) running locally (default
+`http://localhost:5000`) — see that repo for setup. Full endpoint documentation lives in that
+repo's [`docs/API.md`](https://github.com/muhammadsarim11/EdSync/blob/main/docs/API.md).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable              | Required | Purpose                                         |
+| --------------------- | -------- | ----------------------------------------------- |
+| `NEXT_PUBLIC_API_URL` | yes      | Base URL of the EdSync API, including `/api/v1` |
 
-## Learn More
+## Cross-domain auth note
 
-To learn more about Next.js, take a look at the following resources:
+The API's session cookie is `SameSite=None; Secure` in production, which lets it work across the
+different Vercel/Render domains — but Safari and Firefox block third-party cookies like this by
+default under their tracking-prevention settings, so login can silently fail for those browsers
+until the frontend and API share a registrable domain (e.g. `app.example.com` +
+`api.example.com`, which are same-site to the browser regardless of subdomain). Worth revisiting
+once a custom domain is in place.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Linting & formatting
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run lint
+npm run format        # prettier --write
+npm run format:check  # prettier --check
+```
 
-## Deploy on Vercel
+## Roadmap
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This repo starts at the scaffolding stage — providers, the API client, and session handling are
+wired up, proven with a minimal home page. Auth pages, role dashboards, curriculum/grading UI,
+real-time chat, and tenant branding are built out phase by phase from here.

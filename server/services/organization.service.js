@@ -60,6 +60,23 @@ export const registerOrganization = async ({ orgName, adminName, email, password
   };
 };
 
+export const lookupOrganizationBySlug = async ({ slug }) => {
+  const organization = await Organization.findOne({ slug: slug.toLowerCase() });
+  if (!organization) {
+    throw new AppError('No institute found with that identifier.', 404);
+  }
+
+  return {
+    statusCode: 200,
+    payload: {
+      status: 'success',
+      data: {
+        organization: { id: organization._id, name: organization.name, logoUrl: organization.logoUrl }
+      }
+    }
+  };
+};
+
 export const getMyOrganization = async ({ organizationId }) => {
   const organization = await Organization.findById(organizationId);
   if (!organization) {

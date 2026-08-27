@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { LayoutDashboard, Mail, Users } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Mail, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -25,11 +25,7 @@ import {
 import { getOrganization } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, logout } = useAuth();
@@ -77,6 +73,16 @@ export default function DashboardLayout({
                   >
                     <LayoutDashboard />
                     <span>Dashboard</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith("/cohorts")}
+                    render={<Link href="/cohorts" />}
+                  >
+                    <GraduationCap />
+                    <span>Cohorts</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 

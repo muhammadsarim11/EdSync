@@ -79,6 +79,39 @@ export type Cohort = {
   createdAt: string;
 };
 
+export type Module = {
+  id: string;
+  organizationId: string;
+  cohortId: string;
+  title: string;
+  orderIndex: number;
+  createdAt: string;
+};
+
+export type Lecture = {
+  id: string;
+  organizationId: string;
+  cohortId: string;
+  moduleId: string;
+  title: string;
+  orderIndex: number;
+  type: "Live" | "Recorded";
+  videoUrl: string;
+  resourceUrl: string;
+  durationInMinutes: number;
+  createdAt: string;
+};
+
+export type Enrollment = {
+  id: string;
+  organizationId: string;
+  cohortId: string;
+  status: "Active" | "Completed" | "Dropped";
+  progressPercentage: number;
+  createdAt: string;
+  student: { id: string; name: string; email: string } | null;
+};
+
 // GET /invitations returns raw Mongoose documents (_id), unlike the shaped
 // `id` fields the rest of the API uses - see docs/API.md.
 export type Invitation = {
@@ -133,6 +166,122 @@ export const listCohorts = () =>
   request<{ status: "success"; results: number; data: { cohorts: Cohort[] } }>(
     "/cohorts",
   );
+
+export const getCohort = (id: string) =>
+  request<{ status: "success"; data: { cohort: Cohort } }>(`/cohorts/${id}`);
+
+export const createCohort = (input: {
+  title: string;
+  description?: string;
+  instructorId: string;
+  startDate: string;
+  endDate?: string;
+}) =>
+  request<{ status: "success"; data: { cohort: Cohort } }>("/cohorts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+export const updateCohort = (
+  id: string,
+  input: Partial<{
+    title: string;
+    description: string;
+    status: Cohort["status"];
+    startDate: string;
+    endDate: string;
+  }>,
+) =>
+  request<{ status: "success"; data: { cohort: Cohort } }>(`/cohorts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+
+export const deleteCohort = (id: string) =>
+  request<{ status: "success"; message: string }>(`/cohorts/${id}`, {
+    method: "DELETE",
+  });
+
+// -- Modules ------------------------------------------------------------------
+
+export const listModules = (cohortId: string) =>
+  request<{ status: "success"; results: number; data: { modules: Module[] } }>(
+    `/cohorts/${cohortId}/modules`,
+  );
+
+export const createModule = (
+  cohortId: string,
+  input: { title: string; orderIndex: number },
+) =>
+  request<{ status: "success"; data: { module: Module } }>(
+    `/cohorts/${cohortId}/modules`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const deleteModule = (id: string) =>
+  request<{ status: "success"; message: string }>(`/modules/${id}`, {
+    method: "DELETE",
+  });
+
+// -- Lectures -----------------------------------------------------------------
+
+export const listLectures = (moduleId: string) =>
+  request<{
+    status: "success";
+    results: number;
+    data: { lectures: Lecture[] };
+  }>(`/modules/${moduleId}/lectures`);
+
+export const createLecture = (
+  moduleId: string,
+  input: {
+    title: string;
+    orderIndex: number;
+    type: "Live" | "Recorded";
+    videoUrl?: string;
+    resourceUrl?: string;
+    durationInMinutes?: number;
+  },
+) =>
+  request<{ status: "success"; data: { lecture: Lecture } }>(
+    `/modules/${moduleId}/lectures`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const deleteLecture = (id: string) =>
+  request<{ status: "success"; message: string }>(`/lectures/${id}`, {
+    method: "DELETE",
+  });
+
+// -- Enrollments --------------------------------------------------------------
+
+export const listEnrollments = (cohortId: string) =>
+  request<{
+    status: "success";
+    results: number;
+    data: { enrollments: Enrollment[] };
+  }>(`/cohorts/${cohortId}/enrollments`);
+
+export const bulkEnroll = (cohortId: string, studentIds: string[]) =>
+  request<{
+    status: "success";
+    message: string;
+    data: { enrollments: Enrollment[] };
+  }>(`/cohorts/${cohortId}/enrollments`, {
+    method: "POST",
+    body: JSON.stringify({ studentIds }),
+  });
+
+export const removeEnrollment = (id: string) =>
+  request<{ status: "success"; message: string }>(`/enrollments/${id}`, {
+    method: "DELETE",
+  });
 
 // -- User management ---------------------------------------------------------
 

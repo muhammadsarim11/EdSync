@@ -9,10 +9,12 @@ import {
 
 const router = express.Router();
 
-router.use(requireAuth, restrictTo('InstituteAdmin'));
+router.use(requireAuth);
 
-router.get('/', listUsersValidator, validate, getUsers);
-router.patch('/:id/suspend', userIdParamValidator, validate, suspend);
-router.patch('/:id/reactivate', userIdParamValidator, validate, reactivate);
+// Instructors need this to find students to enroll in their own cohorts;
+// suspend/reactivate stay InstituteAdmin-only.
+router.get('/', restrictTo('InstituteAdmin', 'Instructor'), listUsersValidator, validate, getUsers);
+router.patch('/:id/suspend', restrictTo('InstituteAdmin'), userIdParamValidator, validate, suspend);
+router.patch('/:id/reactivate', restrictTo('InstituteAdmin'), userIdParamValidator, validate, reactivate);
 
 export default router;

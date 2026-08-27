@@ -367,9 +367,13 @@ Revoke a pending invite. 400 if it's not currently `Pending` (already accepted/r
 
 ## User management
 
-`/users`, all routes `InstituteAdmin`-only, scoped to the admin's own organization.
+`/users`, scoped to the acting user's own organization.
 
 ### `GET /users`
+
+Auth: `InstituteAdmin` or `Instructor` — an Instructor needs this to find students to enroll in
+their own cohorts (see [Enrollments](#enrollments)); it's read-only, so this doesn't extend to
+suspend/reactivate.
 
 Query params: `role` (`InstituteAdmin`|`Instructor`|`Student`), `status` (`active`|`suspended`),
 both optional.
@@ -377,6 +381,8 @@ both optional.
 **200** `{ status, results, data: { users: [{ id, name, email, role, isActive, isEmailVerified, organizationId, createdAt }] } }`
 
 ### `PATCH /users/:id/suspend` / `PATCH /users/:id/reactivate`
+
+Auth: `InstituteAdmin` only.
 
 Flips `isActive`. A suspended user's _existing_ session stops working on their very next request —
 `requireAuth` checks `isActive` every time, so there's no token blacklist to maintain. An admin

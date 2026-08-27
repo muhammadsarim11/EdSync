@@ -9,12 +9,23 @@ describe('GET /api/v1/users', () => {
     expect(res.status).toBe(401);
   });
 
-  it('blocks a non-admin from listing users', async () => {
+  it('blocks a Student from listing users', async () => {
     const admin = await createVerifiedOrgAdmin();
     const { cookie } = await inviteAndRegister(admin, { email: 'student@example.com', role: 'Student' });
 
     const res = await request(app).get('/api/v1/users').set('Cookie', cookie);
     expect(res.status).toBe(403);
+  });
+
+  it('lets an Instructor list users too, so they can find students to enroll', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    const { cookie } = await inviteAndRegister(admin, {
+      email: 'instructor@example.com',
+      role: 'Instructor'
+    });
+
+    const res = await request(app).get('/api/v1/users').set('Cookie', cookie);
+    expect(res.status).toBe(200);
   });
 
   it("scopes the list to the admin's organization and supports role/status filters", async () => {
@@ -113,5 +124,19 @@ describe('PATCH /api/v1/users/:id/suspend and /reactivate', () => {
     const admin = await createVerifiedOrgAdmin();
     const res = await request(app).patch('/api/v1/users/not-an-id/suspend').set('Cookie', admin.cookie);
     expect(res.status).toBe(400);
+  });
+
+  it('blocks an Instructor from suspending, even though they can list users', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    const instructor = await inviteAndRegister(admin, {
+      email: 'instructor2@example.com',
+      role: 'Instructor'
+    });
+    const student = await inviteAndRegister(admin, { email: 'student2@example.com', role: 'Student' });
+
+    const res = await request(app)
+      .patch(`/api/v1/users/${student.userId}/suspend`)
+      .set('Cookie', instructor.cookie);
+    expect(res.status).toBe(403);
   });
 });

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -487,19 +488,27 @@ function ModuleCard({
                   <Badge variant="secondary">{lecture.type}</Badge>
                   <span>{lecture.title}</span>
                 </div>
-                {canManage && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={
-                      removeLecture.isPending &&
-                      removeLecture.variables === lecture.id
-                    }
-                    onClick={() => removeLecture.mutate(lecture.id)}
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/lectures/${lecture.id}/assignments`}
+                    className="text-muted-foreground text-sm underline underline-offset-4"
                   >
-                    Delete
-                  </Button>
-                )}
+                    Assignments
+                  </Link>
+                  {canManage && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={
+                        removeLecture.isPending &&
+                        removeLecture.variables === lecture.id
+                      }
+                      onClick={() => removeLecture.mutate(lecture.id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

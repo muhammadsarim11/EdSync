@@ -102,6 +102,34 @@ export type Lecture = {
   createdAt: string;
 };
 
+export type Assignment = {
+  id: string;
+  organizationId: string;
+  cohortId: string;
+  lectureId: string;
+  title: string;
+  description?: string;
+  attachmentUrl: string;
+  deadline: string;
+  totalMarks: number;
+  createdAt: string;
+};
+
+// Shape differs by audience: a Student's own entry has `studentId`; staff's
+// list has `student` populated instead - see docs/API.md.
+export type Submission = {
+  id: string;
+  organizationId: string;
+  assignmentId: string;
+  studentId?: string;
+  fileUrl: string;
+  obtainedMarks: number | null;
+  feedback: string;
+  status: "Submitted" | "Graded" | "Late";
+  createdAt: string;
+  student?: { id: string; name: string; email: string } | null;
+};
+
 export type Enrollment = {
   id: string;
   organizationId: string;
@@ -254,10 +282,77 @@ export const createLecture = (
     },
   );
 
+export const getLecture = (id: string) =>
+  request<{ status: "success"; data: { lecture: Lecture } }>(`/lectures/${id}`);
+
 export const deleteLecture = (id: string) =>
   request<{ status: "success"; message: string }>(`/lectures/${id}`, {
     method: "DELETE",
   });
+
+// -- Assignments --------------------------------------------------------------
+
+export const listAssignments = (lectureId: string) =>
+  request<{
+    status: "success";
+    results: number;
+    data: { assignments: Assignment[] };
+  }>(`/lectures/${lectureId}/assignments`);
+
+export const getAssignment = (id: string) =>
+  request<{ status: "success"; data: { assignment: Assignment } }>(
+    `/assignments/${id}`,
+  );
+
+export const createAssignment = (
+  lectureId: string,
+  input: {
+    title: string;
+    description?: string;
+    attachmentUrl?: string;
+    deadline: string;
+    totalMarks?: number;
+  },
+) =>
+  request<{ status: "success"; data: { assignment: Assignment } }>(
+    `/lectures/${lectureId}/assignments`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const deleteAssignment = (id: string) =>
+  request<{ status: "success"; message: string }>(`/assignments/${id}`, {
+    method: "DELETE",
+  });
+
+// -- Submissions --------------------------------------------------------------
+
+export const listSubmissions = (assignmentId: string) =>
+  request<{
+    status: "success";
+    results: number;
+    data: { submissions: Submission[] };
+  }>(`/assignments/${assignmentId}/submissions`);
+
+export const submitAssignment = (assignmentId: string, fileUrl: string) =>
+  request<{ status: "success"; data: { submission: Submission } }>(
+    `/assignments/${assignmentId}/submissions`,
+    { method: "POST", body: JSON.stringify({ fileUrl }) },
+  );
+
+export const gradeSubmission = (
+  id: string,
+  input: { obtainedMarks: number; feedback?: string },
+) =>
+  request<{ status: "success"; data: { submission: Submission } }>(
+    `/submissions/${id}/grade`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
 
 // -- Enrollments --------------------------------------------------------------
 

@@ -52,6 +52,44 @@ export type OrganizationSummary = {
   logoUrl: string;
 };
 
+export type Organization = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string;
+  themeColor: string;
+  createdAt: string;
+};
+
+export type DashboardStats = {
+  cohorts: { total: number; active: number };
+  enrolledStudents: number;
+  pendingInvites: number;
+};
+
+export type Cohort = {
+  id: string;
+  organizationId: string;
+  instructorId: string;
+  title: string;
+  description?: string;
+  status: "Upcoming" | "Active" | "Completed";
+  startDate: string;
+  endDate?: string;
+  createdAt: string;
+};
+
+// GET /invitations returns raw Mongoose documents (_id), unlike the shaped
+// `id` fields the rest of the API uses - see docs/API.md.
+export type Invitation = {
+  _id: string;
+  email: string;
+  role: Role;
+  status: "Pending" | "Accepted" | "Revoked";
+  expiresAt: string;
+  createdAt: string;
+};
+
 // -- Session --------------------------------------------------------------
 
 export const getMe = () =>
@@ -78,6 +116,82 @@ export const createOrganization = (input: {
     message: string;
     data: { organization: { id: string; name: string; slug: string } };
   }>("/organizations", { method: "POST", body: JSON.stringify(input) });
+
+export const getOrganization = () =>
+  request<{ status: "success"; data: { organization: Organization } }>(
+    "/organizations/me",
+  );
+
+export const getDashboard = () =>
+  request<{ status: "success"; data: { dashboard: DashboardStats } }>(
+    "/organizations/me/dashboard",
+  );
+
+// -- Cohorts ----------------------------------------------------------------
+
+export const listCohorts = () =>
+  request<{ status: "success"; results: number; data: { cohorts: Cohort[] } }>(
+    "/cohorts",
+  );
+
+// -- User management ---------------------------------------------------------
+
+export const listUsers = (
+  params: { role?: Role; status?: "active" | "suspended" } = {},
+) => {
+  const query = new URLSearchParams();
+  if (params.role) query.set("role", params.role);
+  if (params.status) query.set("status", params.status);
+  const qs = query.toString();
+  return request<{
+    status: "success";
+    results: number;
+    data: { users: User[] };
+  }>(`/users${qs ? `?${qs}` : ""}`);
+};
+
+export const suspendUser = (id: string) =>
+  request<{ status: "success"; message: string; data: { user: User } }>(
+    `/users/${id}/suspend`,
+    {
+      method: "PATCH",
+    },
+  );
+
+export const reactivateUser = (id: string) =>
+  request<{ status: "success"; message: string; data: { user: User } }>(
+    `/users/${id}/reactivate`,
+    {
+      method: "PATCH",
+    },
+  );
+
+// -- Invitations --------------------------------------------------------------
+
+export const listInvitations = () =>
+  request<{ status: "success"; data: { invitations: Invitation[] } }>(
+    "/invitations",
+  );
+
+export const createInvitation = (input: { email: string; role: Role }) =>
+  request<{
+    status: "success";
+    message: string;
+    data: {
+      invitation: {
+        id: string;
+        email: string;
+        role: Role;
+        status: string;
+        expiresAt: string;
+      };
+    };
+  }>("/invitations", { method: "POST", body: JSON.stringify(input) });
+
+export const revokeInvitation = (id: string) =>
+  request<{ status: "success"; message: string }>(`/invitations/${id}`, {
+    method: "DELETE",
+  });
 
 // -- Auth ---------------------------------------------------------------
 

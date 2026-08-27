@@ -1,18 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
 export default function Home() {
-  const { user, isLoading, logout } = useAuth();
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, user, router]);
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-16">
       <h1 className="text-2xl font-semibold">EdSync</h1>
 
-      {isLoading && <p className="text-muted-foreground">Checking session…</p>}
+      {(isLoading || user) && <p className="text-muted-foreground">Loading…</p>}
 
       {!isLoading && !user && (
         <div className="flex flex-col items-center gap-3">
@@ -28,16 +37,6 @@ export default function Home() {
               Create an institute
             </Link>
           </div>
-        </div>
-      )}
-
-      {!isLoading && user && (
-        <div className="flex flex-col items-center gap-3">
-          <p>
-            Signed in as <span className="font-medium">{user.name}</span> (
-            {user.role})
-          </p>
-          <Button onClick={() => logout()}>Log out</Button>
         </div>
       )}
     </main>

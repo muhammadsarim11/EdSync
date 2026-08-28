@@ -1,5 +1,7 @@
 # EdSync Client
 
+[![CI](https://github.com/muhammadsarim11/edsync-client/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammadsarim11/edsync-client/actions/workflows/ci.yml)
+
 The frontend for [EdSync](https://github.com/muhammadsarim11/EdSync), a multi-tenant LMS backend.
 Deployed separately from the API — this repo on Vercel, the API on Render.
 

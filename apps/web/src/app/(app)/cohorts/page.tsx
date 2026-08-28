@@ -61,12 +61,14 @@ function CreateCohortDialog() {
   const [serverError, setServerError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: instructorsData } = useQuery({
+  const { data: instructorsData, isLoading: instructorsLoading } = useQuery({
     queryKey: ["users", "Instructor"],
     queryFn: () => listUsers({ role: "Instructor" }),
     enabled: open,
   });
   const instructors = instructorsData?.data.users ?? [];
+  const hasNoInstructors =
+    open && !instructorsLoading && instructors.length === 0;
 
   const {
     register,
@@ -114,6 +116,21 @@ function CreateCohortDialog() {
           {serverError && (
             <Alert variant="destructive">
               <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
+
+          {hasNoInstructors && (
+            <Alert>
+              <AlertDescription>
+                You don&apos;t have any instructors yet.{" "}
+                <Link
+                  href="/dashboard/invitations"
+                  className="underline underline-offset-4"
+                >
+                  Invite one
+                </Link>{" "}
+                before creating a cohort.
+              </AlertDescription>
             </Alert>
           )}
 
@@ -175,7 +192,11 @@ function CreateCohortDialog() {
             </FormField>
           </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            disabled={isSubmitting || hasNoInstructors}
+            className="w-full"
+          >
             {isSubmitting ? "Creating…" : "Create cohort"}
           </Button>
         </form>

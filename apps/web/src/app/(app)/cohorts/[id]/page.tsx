@@ -10,7 +10,7 @@ import { z } from "zod";
 import { FormField } from "@/components/form-field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -57,6 +57,7 @@ import {
   type Cohort,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 function canManageCohort(cohort: Cohort, userId: string, role: string) {
   return (
@@ -829,6 +830,21 @@ export default function CohortDetailPage() {
           <AlertDescription>{deleteError}</AlertDescription>
         </Alert>
       )}
+
+      <div className="flex gap-2">
+        <Link
+          href={`/cohorts/${cohort.id}/chat`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Chat
+        </Link>
+        <Link
+          href={`/cohorts/${cohort.id}/questions`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Questions
+        </Link>
+      </div>
 
       <Tabs defaultValue="modules">
         <TabsList>

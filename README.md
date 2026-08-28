@@ -1,5 +1,7 @@
 # EdSync
 
+[![CI](https://github.com/muhammadsarim11/EdSync/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammadsarim11/EdSync/actions/workflows/ci.yml)
+
 A multi-tenant B2B LMS backend. Each institute is an isolated `Organization` tenant; every
 tenant-scoped query and index is keyed on `organizationId` so one institute's data is never
 visible to another.

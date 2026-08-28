@@ -140,6 +140,25 @@ export type Enrollment = {
   student: { id: string; name: string; email: string } | null;
 };
 
+export type Reply = {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+export type Question = {
+  id: string;
+  organizationId: string;
+  cohortId: string;
+  authorId: string;
+  title: string;
+  body: string;
+  status: "Open" | "Resolved";
+  replies: Reply[];
+  createdAt: string;
+};
+
 // GET /invitations returns raw Mongoose documents (_id), unlike the shaped
 // `id` fields the rest of the API uses - see docs/API.md.
 export type Invitation = {
@@ -377,6 +396,49 @@ export const removeEnrollment = (id: string) =>
   request<{ status: "success"; message: string }>(`/enrollments/${id}`, {
     method: "DELETE",
   });
+
+// -- Questions (Q&A board) -----------------------------------------------------
+
+export const listQuestions = (cohortId: string) =>
+  request<{
+    status: "success";
+    results: number;
+    data: { questions: Question[] };
+  }>(`/cohorts/${cohortId}/questions`);
+
+export const getQuestion = (id: string) =>
+  request<{ status: "success"; data: { question: Question } }>(
+    `/questions/${id}`,
+  );
+
+export const createQuestion = (
+  cohortId: string,
+  input: { title: string; body: string },
+) =>
+  request<{ status: "success"; data: { question: Question } }>(
+    `/cohorts/${cohortId}/questions`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+
+export const addReply = (questionId: string, body: string) =>
+  request<{ status: "success"; data: { question: Question } }>(
+    `/questions/${questionId}/replies`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    },
+  );
+
+export const resolveQuestion = (id: string) =>
+  request<{ status: "success"; data: { question: Question } }>(
+    `/questions/${id}/resolve`,
+    {
+      method: "PATCH",
+    },
+  );
 
 // -- User management ---------------------------------------------------------
 

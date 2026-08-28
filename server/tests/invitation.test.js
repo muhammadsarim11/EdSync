@@ -34,6 +34,26 @@ describe('POST /api/v1/invitations', () => {
     expect(sendInvitationEmail).toHaveBeenCalledTimes(1);
   });
 
+  it('falls back to a default base URL for the invite link if CLIENT_URL is unset', async () => {
+    const admin = await createVerifiedOrgAdmin();
+    const previousClientUrl = process.env.CLIENT_URL;
+    delete process.env.CLIENT_URL;
+
+    try {
+      const res = await request(app)
+        .post('/api/v1/invitations')
+        .set('Cookie', admin.cookie)
+        .send({ email: 'nolink@example.com', role: 'Student' });
+      expect(res.status).toBe(201);
+
+      const inviteLink = sendInvitationEmail.mock.calls.at(-1)[1];
+      expect(inviteLink.startsWith('undefined')).toBe(false);
+      expect(() => new URL(inviteLink)).not.toThrow();
+    } finally {
+      process.env.CLIENT_URL = previousClientUrl;
+    }
+  });
+
   it('creates the invited user with the invitation role/org even if the client sends different ones', async () => {
     const admin = await createVerifiedOrgAdmin();
     await request(app)

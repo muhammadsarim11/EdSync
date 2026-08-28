@@ -39,7 +39,7 @@ connects to Mongo, and starts listening.
 ## Getting started
 
 ```bash
-docker compose up -d redis   # from the repo root
+docker compose up -d   # from the repo root - starts Redis and a replica-set MongoDB
 cd server
 npm install
 cp .env.example .env   # fill in real values
@@ -47,10 +47,14 @@ npm run dev
 npm run worker              # in a second terminal - actually sends the queued emails
 ```
 
-You'll need a MongoDB instance running locally (or a `MONGO_URI` pointing at one, e.g. Atlas), a
-Gmail account with an [App Password](https://myaccount.google.com/apppasswords) for sending
-verification/invite emails, and Redis (`docker compose up -d redis`, or point `REDIS_URL` at any
-other instance).
+You'll need MongoDB running as a **replica set**, not a plain standalone `mongod` — invite
+acceptance uses a multi-document transaction, which MongoDB only supports on a replica set (or
+mongos). `docker compose up -d mongo` gives you a single-node one on port `27018` (see
+`docker-compose.yml` for why not the default `27017`); point `MONGO_URI` at Atlas instead if you'd
+rather not run Mongo locally at all (every Atlas cluster, including the free tier, is already a
+replica set). You'll also need a Gmail account with an
+[App Password](https://myaccount.google.com/apppasswords) for sending verification/invite emails,
+and Redis (`docker compose up -d redis`, or point `REDIS_URL` at any other instance).
 
 ### Environment variables
 
@@ -58,7 +62,7 @@ other instance).
 | ---------------- | ------------------------------------ | ------------------------------------------------------------------------- |
 | `PORT`           | no (default `5000`)                  | HTTP port                                                                 |
 | `NODE_ENV`       | no                                   | `development` shows full error detail; anything else hides it             |
-| `MONGO_URI`      | yes                                  | Mongo connection string                                                   |
+| `MONGO_URI`      | yes                                  | Mongo connection string — must point at a replica set (see above)         |
 | `JWT_SECRET`     | yes                                  | Signs the auth cookie's JWT                                               |
 | `EMAIL_USER`     | yes                                  | Gmail address used to send verification/invite/reset emails               |
 | `EMAIL_APP_PASS` | yes                                  | Gmail App Password for `EMAIL_USER`                                       |

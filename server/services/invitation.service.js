@@ -34,7 +34,8 @@ export const createInvitation = async ({ organizationId, invitedBy, email, role 
     expiresAt: Date.now() + INVITE_EXPIRY_MS
   });
 
-  const inviteLink = `${process.env.CLIENT_URL}/accept-invite?token=${token}`;
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const inviteLink = `${clientUrl}/accept-invite?token=${token}`;
   await queueInvitationEmail(normalizedEmail, inviteLink, organization.name, role);
 
   return {

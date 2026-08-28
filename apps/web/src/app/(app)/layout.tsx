@@ -1,7 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { GraduationCap, LayoutDashboard, Mail, Users } from "lucide-react";
+import {
+  GraduationCap,
+  LayoutDashboard,
+  Mail,
+  Settings,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -41,6 +47,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     queryFn: getOrganization,
     enabled: !!user,
   });
+  const organization = orgData?.data.organization;
+
+  // White-labeling: override the CSS variable shadcn's Button/Badge/etc.
+  // already read for their accent color, rather than a separate theming
+  // system. Cleared on unmount so leaving the app doesn't leak the color
+  // onto public pages that render this org's data (e.g. after logout).
+  useEffect(() => {
+    if (!organization?.themeColor) return;
+    document.documentElement.style.setProperty(
+      "--primary",
+      organization.themeColor,
+    );
+    return () => {
+      document.documentElement.style.removeProperty("--primary");
+    };
+  }, [organization?.themeColor]);
 
   if (isLoading || !user) {
     return (
@@ -50,15 +72,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const organization = orgData?.data.organization;
-
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="gap-0.5 px-3 py-3">
-          <span className="text-sm font-semibold">
-            {organization?.name ?? "EdSync"}
-          </span>
+          <div className="flex items-center gap-2">
+            {organization?.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary org-supplied URL, not a static asset
+              <img
+                src={organization.logoUrl}
+                alt=""
+                className="size-6 shrink-0 rounded object-contain"
+              />
+            )}
+            <span className="text-sm font-semibold">
+              {organization?.name ?? "EdSync"}
+            </span>
+          </div>
           <span className="text-muted-foreground text-xs">{user.role}</span>
         </SidebarHeader>
         <SidebarContent>
@@ -104,6 +134,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       >
                         <Mail />
                         <span>Invitations</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={pathname === "/dashboard/settings"}
+                        render={<Link href="/dashboard/settings" />}
+                      >
+                        <Settings />
+                        <span>Settings</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   </>

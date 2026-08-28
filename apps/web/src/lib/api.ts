@@ -202,6 +202,17 @@ export const getOrganization = () =>
     "/organizations/me",
   );
 
+export const updateOrganization = (
+  input: Partial<{ name: string; logoUrl: string; themeColor: string }>,
+) =>
+  request<{ status: "success"; data: { organization: Organization } }>(
+    "/organizations/me",
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+
 export const getDashboard = () =>
   request<{ status: "success"; data: { dashboard: DashboardStats } }>(
     "/organizations/me/dashboard",

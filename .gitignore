@@ -1,0 +1,34 @@
+# Dependencies (npm workspaces hoist to the root)
+node_modules/
+.pnp
+.pnp.*
+
+# Env files: never commit real secrets. Templates (*.example) are allowed.
+.env
+.env.*
+!.env*.example
+
+# Build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# Test / coverage
+coverage/
+.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.pem

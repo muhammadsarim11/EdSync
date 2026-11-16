@@ -1,7 +1,9 @@
 version: 2
 updates:
+  # One root lockfile (npm workspaces), so a single npm entry covers both
+  # apps/web and apps/server.
   - package-ecosystem: npm
-    directory: /server
+    directory: /
     schedule:
       interval: weekly
     groups:

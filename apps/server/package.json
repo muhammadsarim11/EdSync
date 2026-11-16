@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "@edsync/server",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
@@ -20,7 +20,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "EdSync API: Express 5 + MongoDB multi-tenant LMS backend",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bullmq": "^6.2.0",

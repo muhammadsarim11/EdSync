@@ -14,12 +14,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-and-test:
+  # Path filter so a frontend-only PR doesn't pay for the backend's
+  # MongoDB-backed test suite, and vice versa. Runs everything on main.
+  changes:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared: &shared
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/**'
+            web:
+              - *shared
+              - 'apps/web/**'
+            server:
+              - *shared
+              - 'apps/server/**'
 
-    defaults:
-      run:
-        working-directory: server
+  server:
+    name: server (lint, format, test)
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.server == 'true'
+    runs-on: ubuntu-latest
 
     env:
       # Tests need a replica set (transactions), so they spin up their own
@@ -34,22 +59,50 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: server/package-lock.json
 
       - name: Cache MongoDB binaries
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.cache/mongodb-binaries
-          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint -w @edsync/server
 
       - name: Check formatting
-        run: npm run format:check
+        run: npm run format:check -w @edsync/server
 
       - name: Run tests
-        run: npm test
+        run: npm test -w @edsync/server
+
+  web:
+    name: web (lint, format, build)
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api/v1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint -w @edsync/web
+
+      - name: Check formatting
+        run: npm run format:check -w @edsync/web
+
+      - name: Build
+        run: npm run build -w @edsync/web

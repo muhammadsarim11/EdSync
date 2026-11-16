@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormField } from "@/components/form-field";
@@ -48,13 +48,16 @@ import {
   deleteLecture,
   deleteModule,
   getCohort,
+  getRecordingUploadSignature,
   listEnrollments,
   listLectures,
   listModules,
   listUsers,
   removeEnrollment,
   updateCohort,
+  uploadRecordingToCloudinary,
   type Cohort,
+  type Lecture,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -422,6 +425,93 @@ function AddLectureDialog({
 
 // -- Modules tab --------------------------------------------------------------
 
+// -- Recording --------------------------------------------------------------
+
+function RecordingControls({
+  lecture,
+  canManage,
+}: {
+  lecture: Lecture;
+  canManage: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const onFile = async (file: File) => {
+    setError(null);
+    setProgress(0);
+    try {
+      const { data } = await getRecordingUploadSignature(lecture.id);
+      await uploadRecordingToCloudinary(data.upload, file, setProgress);
+      // Cloudinary calls our webhook once processing finishes; the lecture
+      // flips to "ready" then, so refresh now and let the user re-open later.
+      await queryClient.invalidateQueries({
+        queryKey: ["lectures", lecture.moduleId],
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setProgress(null);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      {lecture.recordingStatus === "ready" && (
+        <Dialog>
+          <DialogTrigger render={<Button size="sm" variant="outline" />}>
+            Watch recording
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>{lecture.title}</DialogTitle>
+              <DialogDescription>Class recording</DialogDescription>
+            </DialogHeader>
+            <video
+              src={lecture.recordingUrl}
+              controls
+              preload="metadata"
+              className="w-full rounded-lg bg-black"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+      {canManage && (
+        <>
+          <input
+            ref={fileInput}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void onFile(file);
+            }}
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={progress !== null}
+            onClick={() => fileInput.current?.click()}
+          >
+            {progress !== null
+              ? `Uploading ${progress}%`
+              : lecture.recordingStatus === "ready"
+                ? "Replace recording"
+                : lecture.recordingStatus === "pending"
+                  ? "Processing… (re-upload)"
+                  : "Upload recording"}
+          </Button>
+        </>
+      )}
+      {error && <span className="text-destructive text-xs">{error}</span>}
+    </div>
+  );
+}
+
 function ModuleCard({
   moduleId,
   title,
@@ -490,6 +580,7 @@ function ModuleCard({
                   <span>{lecture.title}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <RecordingControls lecture={lecture} canManage={canManage} />
                   <Link
                     href={`/lectures/${lecture.id}/assignments`}
                     className="text-muted-foreground text-sm underline underline-offset-4"

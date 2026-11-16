@@ -1,6 +1,11 @@
 import { Queue } from 'bullmq';
 import { producerConnection } from '../config/redis.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendInvitationEmail } from '../utils/email.js';
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendInvitationEmail,
+  sendRecordingReadyEmail
+} from '../utils/email.js';
 
 const isTestEnv = () => process.env.NODE_ENV === 'test';
 
@@ -55,4 +60,21 @@ export const queueInvitationEmail = async (email, inviteLink, orgName, role) => 
     return sendInvitationEmail(email, inviteLink, orgName, role);
   }
   return enqueue('invitation', { email, inviteLink, orgName, role });
+};
+
+// One job per recipient (addBulk), so a single bad address retries on its
+// own instead of re-sending to the whole cohort.
+export const queueRecordingReadyEmails = async (emails, lectureTitle, cohortTitle, link) => {
+  if (emails.length === 0) return;
+  if (isTestEnv()) {
+    await Promise.all(emails.map((email) => sendRecordingReadyEmail(email, lectureTitle, cohortTitle, link)));
+    return;
+  }
+  try {
+    await getEmailQueue().addBulk(
+      emails.map((email) => ({ name: 'recording-ready', data: { email, lectureTitle, cohortTitle, link } }))
+    );
+  } catch (err) {
+    console.error('Failed to enqueue "recording-ready" email jobs:', err.message);
+  }
 };

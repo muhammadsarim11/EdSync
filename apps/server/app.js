@@ -13,6 +13,7 @@ import enrollmentRoutes from './routes/enrollment.routes.js';
 import assignmentRoutes from './routes/assignment.routes.js';
 import submissionRoutes from './routes/submission.routes.js';
 import questionRoutes from './routes/question.routes.js';
+import webhookRoutes from './routes/webhook.routes.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { generalLimiter, sanitizeInput } from './middlewares/security.middleware.js';
 
@@ -25,6 +26,10 @@ app.use(
     credentials: true
   })
 );
+// Webhooks need the exact raw bytes to verify their signature, so they are
+// mounted before the JSON body parser and do their own (raw) parsing.
+app.use('/api/v1/webhooks', webhookRoutes);
+
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 app.use(sanitizeInput);

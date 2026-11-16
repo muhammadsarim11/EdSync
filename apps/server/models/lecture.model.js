@@ -42,6 +42,23 @@ const lectureSchema = new mongoose.Schema(
     durationInMinutes: {
       type: Number,
       default: 0
+    },
+    // Lifecycle of an uploaded class recording (Cloudinary):
+    // none -> pending (signature issued) -> ready (webhook received).
+    recordingStatus: {
+      type: String,
+      enum: ['none', 'pending', 'ready'],
+      default: 'none'
+    },
+    recordingUrl: {
+      type: String,
+      default: ''
+    },
+    // Live class lifecycle (Daily.co room): idle -> live -> ended.
+    liveStatus: {
+      type: String,
+      enum: ['idle', 'live', 'ended'],
+      default: 'idle'
     }
   },
   { timestamps: true }

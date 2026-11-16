@@ -4,7 +4,11 @@ import {
   listLectures,
   getLecture,
   updateLecture,
-  deleteLecture
+  deleteLecture,
+  createRecordingUploadSignature,
+  startLiveClass,
+  joinLiveClass,
+  endLiveClass
 } from '../services/lecture.service.js';
 
 export const create = catchAsync(async (req, res) => {
@@ -47,6 +51,42 @@ export const update = catchAsync(async (req, res) => {
 
 export const remove = catchAsync(async (req, res) => {
   const result = await deleteLecture({
+    lectureId: req.params.id,
+    organizationId: req.user.organizationId,
+    user: req.user
+  });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const recordingSignature = catchAsync(async (req, res) => {
+  const result = await createRecordingUploadSignature({
+    lectureId: req.params.id,
+    organizationId: req.user.organizationId,
+    user: req.user
+  });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const liveStart = catchAsync(async (req, res) => {
+  const result = await startLiveClass({
+    lectureId: req.params.id,
+    organizationId: req.user.organizationId,
+    user: req.user
+  });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const liveJoin = catchAsync(async (req, res) => {
+  const result = await joinLiveClass({
+    lectureId: req.params.id,
+    organizationId: req.user.organizationId,
+    user: req.user
+  });
+  res.status(result.statusCode).json(result.payload);
+});
+
+export const liveEnd = catchAsync(async (req, res) => {
+  const result = await endLiveClass({
     lectureId: req.params.id,
     organizationId: req.user.organizationId,
     user: req.user

@@ -1,0 +1,22 @@
+{
+  "name": "edsync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EdSync: a multi-tenant B2B cohort and mentorship platform (Next.js web app + Express API)",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:web": "npm run dev -w @edsync/web",
+    "dev:server": "npm run dev -w @edsync/server",
+    "dev:worker": "npm run worker:dev -w @edsync/server",
+    "build": "npm run build -w @edsync/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "npm run format --workspaces --if-present",
+    "format:check": "npm run format:check --workspaces --if-present",
+    "test": "npm test -w @edsync/server"
+  }
+}

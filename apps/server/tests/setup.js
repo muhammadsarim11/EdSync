@@ -7,11 +7,15 @@ process.env.JWT_SECRET = 'test-jwt-secret-do-not-use-in-production';
 process.env.EMAIL_USER = 'test@example.com';
 process.env.EMAIL_APP_PASS = 'test-app-password';
 process.env.CLIENT_URL = 'http://localhost:3000';
+process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
+process.env.CLOUDINARY_API_KEY = 'test-api-key';
+process.env.CLOUDINARY_API_SECRET = 'test-api-secret';
 
 vi.mock('../utils/email.js', () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
-  sendInvitationEmail: vi.fn().mockResolvedValue(undefined)
+  sendInvitationEmail: vi.fn().mockResolvedValue(undefined),
+  sendRecordingReadyEmail: vi.fn().mockResolvedValue(undefined)
 }));
 
 let replSet;

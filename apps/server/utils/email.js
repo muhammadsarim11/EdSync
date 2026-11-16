@@ -47,3 +47,17 @@ export const sendInvitationEmail = async (email, inviteLink, organizationName, r
     `<p>You have been invited to join <strong>${organizationName}</strong> as a <strong>${role}</strong>.</p><p>Click the link below to accept the invitation and set up your account. It expires in 7 days.</p><p><a href="${inviteLink}">${inviteLink}</a></p>`
   );
 };
+
+const escapeHtml = (value) =>
+  String(value).replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
+  );
+
+export const sendRecordingReadyEmail = async (email, lectureTitle, cohortTitle, link) => {
+  await sendEmailMessage(
+    email,
+    `Recording available: ${lectureTitle}`,
+    `<p>The recording for <strong>${escapeHtml(lectureTitle)}</strong> in <strong>${escapeHtml(cohortTitle)}</strong> is now available.</p><p><a href="${encodeURI(link)}">Watch it on EdSync</a></p>`
+  );
+};

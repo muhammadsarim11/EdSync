@@ -4,14 +4,21 @@ dotenv.config();
 import { Worker } from 'bullmq';
 import connection from '../config/redis.js';
 import validateEnv from '../config/validateEnv.js';
-import { sendVerificationEmail, sendPasswordResetEmail, sendInvitationEmail } from '../utils/email.js';
+import {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendInvitationEmail,
+  sendRecordingReadyEmail
+} from '../utils/email.js';
 
 validateEnv();
 
 const jobHandlers = {
   verification: (data) => sendVerificationEmail(data.email, data.code),
   'password-reset': (data) => sendPasswordResetEmail(data.email, data.code),
-  invitation: (data) => sendInvitationEmail(data.email, data.inviteLink, data.orgName, data.role)
+  invitation: (data) => sendInvitationEmail(data.email, data.inviteLink, data.orgName, data.role),
+  'recording-ready': (data) =>
+    sendRecordingReadyEmail(data.email, data.lectureTitle, data.cohortTitle, data.link)
 };
 
 const worker = new Worker(

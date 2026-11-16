@@ -53,6 +53,12 @@ const lectureSchema = new mongoose.Schema(
     recordingUrl: {
       type: String,
       default: ''
+    },
+    // Live class lifecycle (Daily.co room): idle -> live -> ended.
+    liveStatus: {
+      type: String,
+      enum: ['idle', 'live', 'ended'],
+      default: 'idle'
     }
   },
   { timestamps: true }

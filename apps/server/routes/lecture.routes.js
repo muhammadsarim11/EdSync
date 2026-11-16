@@ -1,5 +1,13 @@
 import express from 'express';
-import { getOne, update, remove, recordingSignature } from '../controllers/lecture.controller.js';
+import {
+  getOne,
+  update,
+  remove,
+  recordingSignature,
+  liveStart,
+  liveJoin,
+  liveEnd
+} from '../controllers/lecture.controller.js';
 import * as assignmentController from '../controllers/assignment.controller.js';
 import { requireAuth, restrictTo } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validators/auth.validators.js';
@@ -26,6 +34,22 @@ router.post(
   lectureIdParamValidator,
   validate,
   recordingSignature
+);
+
+router.post(
+  '/:id/live/start',
+  restrictTo('InstituteAdmin', 'Instructor'),
+  lectureIdParamValidator,
+  validate,
+  liveStart
+);
+router.post('/:id/live/join', lectureIdParamValidator, validate, liveJoin);
+router.post(
+  '/:id/live/end',
+  restrictTo('InstituteAdmin', 'Instructor'),
+  lectureIdParamValidator,
+  validate,
+  liveEnd
 );
 
 router.get('/:lectureId/assignments', assignmentLectureIdParamValidator, validate, assignmentController.list);

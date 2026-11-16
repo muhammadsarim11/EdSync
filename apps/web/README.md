@@ -1,9 +1,7 @@
-# EdSync Client
+# EdSync Web (`apps/web`)
 
-[![CI](https://github.com/muhammadsarim11/edsync-client/actions/workflows/ci.yml/badge.svg)](https://github.com/muhammadsarim11/edsync-client/actions/workflows/ci.yml)
-
-The frontend for [EdSync](https://github.com/muhammadsarim11/EdSync), a multi-tenant LMS backend.
-Deployed separately from the API — this repo on Vercel, the API on Render.
+The frontend of [EdSync](../../README.md), talking to the API in [`apps/server`](../server).
+Deployed separately from the API: this app on Vercel (root directory `apps/web`), the API on Render.
 
 ## Stack
 
@@ -16,14 +14,14 @@ Deployed separately from the API — this repo on Vercel, the API on Render.
 ## Getting started
 
 ```bash
-npm install
+npm install                         # from the repo root - installs every workspace
+cd apps/web
 cp .env.local.example .env.local   # point NEXT_PUBLIC_API_URL at your running API
 npm run dev
 ```
 
-Requires the [EdSync API](https://github.com/muhammadsarim11/EdSync) running locally (default
-`http://localhost:5000`) — see that repo for setup. Full endpoint documentation lives in that
-repo's [`docs/API.md`](https://github.com/muhammadsarim11/EdSync/blob/main/docs/API.md).
+Requires the [EdSync API](../server) running locally (default `http://localhost:5000`); see its
+README for setup. Full endpoint documentation lives in [`docs/API.md`](../../docs/API.md).
 
 ### Environment variables
 
@@ -50,6 +48,5 @@ npm run format:check  # prettier --check
 
 ## Roadmap
 
-This repo starts at the scaffolding stage — providers, the API client, and session handling are
-wired up, proven with a minimal home page. Auth pages, role dashboards, curriculum/grading UI,
-real-time chat, and tenant branding are built out phase by phase from here.
+Auth pages, role dashboards, curriculum/grading UI, real-time chat (cohort chat + Q&A), and tenant
+branding are all built on top of the providers, typed API client, and session handling.

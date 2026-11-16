@@ -722,4 +722,4 @@ to a logged failure rather than a failed request.
 | `REDIS_URL`                     | yes                                  | BullMQ connection for the background email queue                                                                                |
 
 `validateEnv()` fails fast at startup if any required variable is missing — see
-`server/config/validateEnv.js`.
+`apps/server/config/validateEnv.js`.

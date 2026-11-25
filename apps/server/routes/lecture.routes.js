@@ -1,5 +1,5 @@
 import express from 'express';
-import { getOne, update, remove } from '../controllers/lecture.controller.js';
+import { getOne, update, remove, recordingSignature } from '../controllers/lecture.controller.js';
 import * as assignmentController from '../controllers/assignment.controller.js';
 import { requireAuth, restrictTo } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validators/auth.validators.js';
@@ -19,6 +19,14 @@ router.use(requireAuth);
 router.get('/:id', lectureIdParamValidator, validate, getOne);
 router.patch('/:id', restrictTo('InstituteAdmin', 'Instructor'), updateLectureValidator, validate, update);
 router.delete('/:id', restrictTo('InstituteAdmin', 'Instructor'), lectureIdParamValidator, validate, remove);
+
+router.post(
+  '/:id/recording/signature',
+  restrictTo('InstituteAdmin', 'Instructor'),
+  lectureIdParamValidator,
+  validate,
+  recordingSignature
+);
 
 router.get('/:lectureId/assignments', assignmentLectureIdParamValidator, validate, assignmentController.list);
 router.post(

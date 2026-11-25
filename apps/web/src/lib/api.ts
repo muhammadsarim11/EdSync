@@ -99,6 +99,8 @@ export type Lecture = {
   videoUrl: string;
   resourceUrl: string;
   durationInMinutes: number;
+  recordingStatus: "none" | "pending" | "ready";
+  recordingUrl: string;
   createdAt: string;
 };
 
@@ -319,6 +321,54 @@ export const deleteLecture = (id: string) =>
   request<{ status: "success"; message: string }>(`/lectures/${id}`, {
     method: "DELETE",
   });
+
+export type RecordingUpload = {
+  uploadUrl: string;
+  apiKey: string;
+  signature: string;
+  timestamp: number;
+  public_id: string;
+  overwrite: string;
+  invalidate: string;
+};
+
+export const getRecordingUploadSignature = (lectureId: string) =>
+  request<{ status: "success"; data: { upload: RecordingUpload } }>(
+    `/lectures/${lectureId}/recording/signature`,
+    { method: "POST" },
+  );
+
+// Uploads straight from the browser to Cloudinary (no video bytes pass
+// through our API). XHR rather than fetch so we can report progress.
+export function uploadRecordingToCloudinary(
+  upload: RecordingUpload,
+  file: File,
+  onProgress: (percent: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", upload.apiKey);
+    form.append("timestamp", String(upload.timestamp));
+    form.append("signature", upload.signature);
+    form.append("public_id", upload.public_id);
+    form.append("overwrite", upload.overwrite);
+    form.append("invalidate", upload.invalidate);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", upload.uploadUrl);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable)
+        onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () =>
+      xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error("Upload failed. Please try again."));
+    xhr.onerror = () => reject(new Error("Network error during upload."));
+    xhr.send(form);
+  });
+}
 
 // -- Assignments --------------------------------------------------------------
 

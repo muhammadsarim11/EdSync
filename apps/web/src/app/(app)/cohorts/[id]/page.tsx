@@ -512,6 +512,32 @@ function RecordingControls({
   );
 }
 
+function LiveClassLink({
+  lecture,
+  canManage,
+}: {
+  lecture: Lecture;
+  canManage: boolean;
+}) {
+  const isLive = lecture.liveStatus === "live";
+  if (!isLive && !canManage) return null;
+
+  return (
+    <div className="flex items-center gap-2">
+      {isLive && <Badge>Live now</Badge>}
+      <Link
+        href={`/classes/${lecture.id}`}
+        className={buttonVariants({
+          size: "sm",
+          variant: isLive ? "default" : "outline",
+        })}
+      >
+        {isLive ? "Join class" : "Start class"}
+      </Link>
+    </div>
+  );
+}
+
 function ModuleCard({
   moduleId,
   title,
@@ -580,7 +606,14 @@ function ModuleCard({
                   <span>{lecture.title}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <RecordingControls lecture={lecture} canManage={canManage} />
+                  {lecture.type === "Live" ? (
+                    <LiveClassLink lecture={lecture} canManage={canManage} />
+                  ) : (
+                    <RecordingControls
+                      lecture={lecture}
+                      canManage={canManage}
+                    />
+                  )}
                   <Link
                     href={`/lectures/${lecture.id}/assignments`}
                     className="text-muted-foreground text-sm underline underline-offset-4"

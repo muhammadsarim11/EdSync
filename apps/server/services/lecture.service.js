@@ -4,6 +4,7 @@ import Enrollment from '../models/enrollment.model.js';
 import User from '../models/user.model.js';
 import AppError from '../utils/AppError.js';
 import { queueRecordingReadyEmails } from '../queues/email.queue.js';
+import { getDailyConfig, liveRoomName, ensureRoom, createMeetingToken, deleteRoom } from '../config/daily.js';
 import {
   getCloudinaryConfig,
   buildRecordingUploadParams,
@@ -24,6 +25,7 @@ const shapeLecture = (lecture) => ({
   durationInMinutes: lecture.durationInMinutes,
   recordingStatus: lecture.recordingStatus,
   recordingUrl: lecture.recordingUrl,
+  liveStatus: lecture.liveStatus,
   createdAt: lecture.createdAt
 });
 
@@ -179,4 +181,84 @@ export const completeRecordingUpload = async ({ publicId, secureUrl, durationSec
   );
 
   return { handled: true, lecture };
+};
+
+// -- Live class (Daily.co) ----------------------------------------------------
+
+const ROOM_TTL_SECONDS = 4 * 60 * 60;
+const TOKEN_TTL_SECONDS = 4 * 60 * 60;
+const nowSeconds = () => Math.floor(Date.now() / 1000);
+
+const requireDaily = () => {
+  const config = getDailyConfig();
+  if (!config) throw new AppError('Live classes are not configured on this server.', 503);
+  return config;
+};
+
+const findLiveLectureOrFail = async ({ lectureId, organizationId }) => {
+  const lecture = await findLectureOrFail({ lectureId, organizationId });
+  if (lecture.type !== 'Live') {
+    throw new AppError('Only Live lectures can be run as a live class.', 400);
+  }
+  return lecture;
+};
+
+const issueJoin = async ({ config, lecture, user, isOwner }) => {
+  const roomName = liveRoomName(lecture._id);
+  const roomUrl = `https://${config.domain}.daily.co/${roomName}`;
+  const token = await createMeetingToken(config, {
+    roomName,
+    userId: String(user.id),
+    userName: user.name,
+    isOwner,
+    expiresAtSeconds: nowSeconds() + TOKEN_TTL_SECONDS
+  });
+  return { roomUrl, token, isOwner };
+};
+
+export const startLiveClass = async ({ lectureId, organizationId, user }) => {
+  const config = requireDaily();
+  const lecture = await findLiveLectureOrFail({ lectureId, organizationId });
+  const cohort = await findCohortOrFail({ cohortId: lecture.cohortId, organizationId });
+  assertCanManageCohort(cohort, user);
+
+  await ensureRoom(config, liveRoomName(lecture._id), nowSeconds() + ROOM_TTL_SECONDS);
+  lecture.liveStatus = 'live';
+  await lecture.save();
+
+  const join = await issueJoin({ config, lecture, user, isOwner: true });
+  return { statusCode: 200, payload: { status: 'success', data: { join } } };
+};
+
+export const joinLiveClass = async ({ lectureId, organizationId, user }) => {
+  const config = requireDaily();
+  const lecture = await findLiveLectureOrFail({ lectureId, organizationId });
+  const cohort = await findCohortOrFail({ cohortId: lecture.cohortId, organizationId });
+  await assertCanViewCohort(cohort, user);
+
+  if (lecture.liveStatus !== 'live') {
+    throw new AppError('This class is not live right now.', 409);
+  }
+
+  // assertCanManageCohort only restricts Instructors, so Students must be
+  // excluded explicitly: only admins and the owning instructor get owner powers.
+  const isOwner =
+    user.role === 'InstituteAdmin' ||
+    (user.role === 'Instructor' && String(cohort.instructorId) === String(user.id));
+
+  const join = await issueJoin({ config, lecture, user, isOwner });
+  return { statusCode: 200, payload: { status: 'success', data: { join } } };
+};
+
+export const endLiveClass = async ({ lectureId, organizationId, user }) => {
+  const config = requireDaily();
+  const lecture = await findLiveLectureOrFail({ lectureId, organizationId });
+  const cohort = await findCohortOrFail({ cohortId: lecture.cohortId, organizationId });
+  assertCanManageCohort(cohort, user);
+
+  await deleteRoom(config, liveRoomName(lecture._id));
+  lecture.liveStatus = 'ended';
+  await lecture.save();
+
+  return { statusCode: 200, payload: { status: 'success', data: { lecture: shapeLecture(lecture) } } };
 };

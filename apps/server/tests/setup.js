@@ -11,6 +11,16 @@ process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
 process.env.CLOUDINARY_API_KEY = 'test-api-key';
 process.env.CLOUDINARY_API_SECRET = 'test-api-secret';
 
+process.env.DAILY_API_KEY = 'test-daily-key';
+process.env.DAILY_DOMAIN = 'test-domain';
+
+vi.mock('../config/daily.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  ensureRoom: vi.fn().mockResolvedValue('https://test-domain.daily.co/room'),
+  createMeetingToken: vi.fn().mockResolvedValue('meeting-token'),
+  deleteRoom: vi.fn().mockResolvedValue(undefined)
+}));
+
 vi.mock('../utils/email.js', () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
   sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),

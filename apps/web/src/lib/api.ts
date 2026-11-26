@@ -101,6 +101,7 @@ export type Lecture = {
   durationInMinutes: number;
   recordingStatus: "none" | "pending" | "ready";
   recordingUrl: string;
+  liveStatus: "idle" | "live" | "ended";
   createdAt: string;
 };
 
@@ -369,6 +370,23 @@ export function uploadRecordingToCloudinary(
     xhr.send(form);
   });
 }
+
+export type LiveJoin = { roomUrl: string; token: string; isOwner: boolean };
+
+const liveCall = (lectureId: string, action: "start" | "join" | "end") =>
+  request<{ status: "success"; data: { join: LiveJoin; lecture?: Lecture } }>(
+    `/lectures/${lectureId}/live/${action}`,
+    { method: "POST" },
+  );
+
+export const startLiveClass = (lectureId: string) =>
+  liveCall(lectureId, "start");
+export const joinLiveClass = (lectureId: string) => liveCall(lectureId, "join");
+export const endLiveClass = (lectureId: string) =>
+  request<{ status: "success"; data: { lecture: Lecture } }>(
+    `/lectures/${lectureId}/live/end`,
+    { method: "POST" },
+  );
 
 // -- Assignments --------------------------------------------------------------
 

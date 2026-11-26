@@ -7,7 +7,8 @@ import crypto from 'crypto';
 
 const WEBHOOK_MAX_AGE_SECONDS = 2 * 60 * 60;
 
-const sha1 = (value) => crypto.createHash('sha1').update(value).digest('hex');
+const digestHex = (algorithm, value) => crypto.createHash(algorithm).update(value).digest('hex');
+const sha1 = (value) => digestHex('sha1', value);
 
 export const getCloudinaryConfig = () => {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -54,17 +55,21 @@ export const buildRecordingUploadParams = ({ organizationId, lectureId, config, 
   };
 };
 
-// Webhook signature = sha1(rawBody + timestamp + apiSecret), sent in the
-// X-Cld-Signature / X-Cld-Timestamp headers. Compared in constant time and
-// rejected once the timestamp is stale, so a captured request can't be
-// replayed indefinitely.
+// Webhook signature = hash(rawBody + timestamp + apiSecret), sent in the
+// X-Cld-Signature / X-Cld-Timestamp headers. Cloudinary signs with SHA-1 by
+// default and SHA-256 when an account opts in, so both digests are accepted.
+// Compared in constant time and rejected once the timestamp is stale, so a
+// captured request can't be replayed indefinitely.
 export const verifyWebhookSignature = ({ rawBody, timestamp, signature, apiSecret, now = Date.now() }) => {
   if (!rawBody || !timestamp || !signature) return false;
 
   const ts = Number(timestamp);
   if (!Number.isFinite(ts) || Math.abs(now / 1000 - ts) > WEBHOOK_MAX_AGE_SECONDS) return false;
 
-  const expected = Buffer.from(sha1(`${rawBody}${timestamp}${apiSecret}`));
-  const received = Buffer.from(String(signature));
-  return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  const payload = `${rawBody}${timestamp}${apiSecret}`;
+  const received = Buffer.from(String(signature).toLowerCase());
+  return ['sha1', 'sha256'].some((algorithm) => {
+    const expected = Buffer.from(digestHex(algorithm, payload));
+    return expected.length === received.length && crypto.timingSafeEqual(expected, received);
+  });
 };

@@ -12,9 +12,12 @@ import {
 
 const SECRET = process.env.CLOUDINARY_API_SECRET;
 
-const webhook = (body, { secret = SECRET, timestamp = Math.floor(Date.now() / 1000), signature } = {}) => {
+const webhook = (
+  body,
+  { secret = SECRET, timestamp = Math.floor(Date.now() / 1000), signature, algorithm = 'sha1' } = {}
+) => {
   const raw = JSON.stringify(body);
-  const sig = signature ?? crypto.createHash('sha1').update(`${raw}${timestamp}${secret}`).digest('hex');
+  const sig = signature ?? crypto.createHash(algorithm).update(`${raw}${timestamp}${secret}`).digest('hex');
   return request(app)
     .post('/api/v1/webhooks/cloudinary')
     .set('Content-Type', 'application/json')
@@ -99,6 +102,12 @@ describe('POST /api/v1/webhooks/cloudinary', () => {
 
     expect(sendRecordingReadyEmail).toHaveBeenCalledTimes(1);
     expect(sendRecordingReadyEmail.mock.calls[0][0]).toBe('student@example.com');
+  });
+
+  it('accepts a SHA-256 signed webhook', async () => {
+    const { admin, lectureId } = await setup();
+    const res = await webhook(uploadPayload(admin.organizationId, lectureId), { algorithm: 'sha256' });
+    expect(res.status).toBe(200);
   });
 
   it('rejects a bad signature and a stale timestamp', async () => {

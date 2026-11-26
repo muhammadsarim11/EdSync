@@ -63,8 +63,14 @@ export const queueInvitationEmail = async (email, inviteLink, orgName, role) => 
 };
 
 // One job per recipient (addBulk), so a single bad address retries on its
-// own instead of re-sending to the whole cohort.
-export const queueRecordingReadyEmails = async (emails, lectureTitle, cohortTitle, link) => {
+// own instead of re-sending to the whole cohort. The jobId is derived from
+// the recording's public_id plus the recipient, so a duplicate enqueue (for
+// example a webhook redelivered while the first one is still in flight) is
+// dropped by BullMQ instead of emailing the student twice. BullMQ rejects
+// ':' in custom ids, so it is replaced.
+const recordingJobId = (recordingKey, email) => `recording-ready-${recordingKey}-${email}`.replace(/:/g, '_');
+
+export const queueRecordingReadyEmails = async (emails, lectureTitle, cohortTitle, link, recordingKey) => {
   if (emails.length === 0) return;
   if (isTestEnv()) {
     await Promise.all(emails.map((email) => sendRecordingReadyEmail(email, lectureTitle, cohortTitle, link)));
@@ -72,7 +78,11 @@ export const queueRecordingReadyEmails = async (emails, lectureTitle, cohortTitl
   }
   try {
     await getEmailQueue().addBulk(
-      emails.map((email) => ({ name: 'recording-ready', data: { email, lectureTitle, cohortTitle, link } }))
+      emails.map((email) => ({
+        name: 'recording-ready',
+        data: { email, lectureTitle, cohortTitle, link },
+        opts: recordingKey ? { jobId: recordingJobId(recordingKey, email) } : undefined
+      }))
     );
   } catch (err) {
     console.error('Failed to enqueue "recording-ready" email jobs:', err.message);

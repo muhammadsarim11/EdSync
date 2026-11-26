@@ -177,7 +177,8 @@ export const completeRecordingUpload = async ({ publicId, secureUrl, durationSec
     students.map((s) => s.email),
     lecture.title,
     cohort.title,
-    link
+    link,
+    publicId
   );
 
   return { handled: true, lecture };

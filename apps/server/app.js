@@ -14,12 +14,19 @@ import assignmentRoutes from './routes/assignment.routes.js';
 import submissionRoutes from './routes/submission.routes.js';
 import questionRoutes from './routes/question.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
+import healthRoutes from './routes/health.routes.js';
 import { globalErrorHandler, notFoundHandler } from './middlewares/error.middleware.js';
 import { generalLimiter, sanitizeInput } from './middlewares/security.middleware.js';
+import { requestLogger } from './middlewares/requestLogger.middleware.js';
 
 const app = express();
 
+app.use(requestLogger);
 app.use(helmet());
+// Mounted ahead of CORS and the rate limiter: platform health probes come
+// from no browser origin and must never be throttled.
+app.use('/health', healthRoutes);
+app.use('/api/v1/health', healthRoutes);
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',

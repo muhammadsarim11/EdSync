@@ -2,22 +2,40 @@ import nodemailer from 'nodemailer';
 
 let cachedTransporter;
 
-const getTransporter = () => {
+// Any SMTP relay (Brevo, Resend, SendGrid, ...) when SMTP_HOST is set;
+// otherwise the original Gmail app-password setup, kept as a fallback so
+// existing local .env files keep working unchanged.
+export const buildTransportOptions = (env = process.env) => {
+  if (env.SMTP_HOST) {
+    const port = Number(env.SMTP_PORT) || 587;
+    return {
+      host: env.SMTP_HOST,
+      port,
+      secure: port === 465,
+      auth: { user: env.SMTP_USER, pass: env.SMTP_PASS }
+    };
+  }
+  return {
+    service: 'gmail',
+    auth: {
+      user: env.EMAIL_USER,
+      pass: String(env.EMAIL_APP_PASS || '').replace(/\s/g, '')
+    }
+  };
+};
+
+export const getFromAddress = (env = process.env) => env.EMAIL_FROM || env.EMAIL_USER;
+
+export const getTransporter = () => {
   if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_APP_PASS.replace(/\s/g, '')
-      }
-    });
+    cachedTransporter = nodemailer.createTransport(buildTransportOptions());
   }
   return cachedTransporter;
 };
 
 const sendEmailMessage = async (email, subject, html) => {
   await getTransporter().sendMail({
-    from: `"EdSync" <${process.env.EMAIL_USER}>`,
+    from: `"EdSync" <${getFromAddress()}>`,
     to: email,
     subject,
     html
